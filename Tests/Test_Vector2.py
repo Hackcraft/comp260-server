@@ -1,4 +1,4 @@
-from .. import Vector2
+from . import Vector2
 
 # Vectors can be created
 assert Vector2(1,1) != None
