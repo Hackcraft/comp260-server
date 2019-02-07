@@ -11,6 +11,8 @@ class Vector2:
         return Vector2(self.x - other_vector2.x, self.y - other_vector2.y)
 
     def __eq__(self, other_vector2):
+	if not isinstance(other_vector2, Vector2):
+		return False
         return self.x == other_vector2.x and self.y == other_vector2.y
 
     def __ne__(self, other_vector2):
