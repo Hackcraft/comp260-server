@@ -6,7 +6,6 @@ python:
   
 install:
   - export PYTHONPATH=$PYTHONPATH:$(pwd)/src/thermo
-  - python3 setup.py install
 
 script: 
 
