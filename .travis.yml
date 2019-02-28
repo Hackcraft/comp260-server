@@ -11,3 +11,4 @@ before_install:
 script: 
 
   - python Tests/Test_Vector2.py
+  - python Tests/Test_Entity.py

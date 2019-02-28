@@ -26,4 +26,6 @@ assert (test_vec1 == test_vec2) == False
 assert (test_vec1 != test_vec2) == True
 
 # Vectors can be printed
-assert str(test_vec1) == "x: 1 y: 1" 
+assert str(test_vec1) == "1 1"
+
+print("Test_Vector2.py - pass")

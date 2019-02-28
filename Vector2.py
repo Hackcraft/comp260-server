@@ -27,4 +27,4 @@ class Vector2:
             return None
 
     def __str__(self):
-        return "x: " + str(self.x) + " y: " + str(self.y)
+        return str(self.x) + " " + str(self.y)
