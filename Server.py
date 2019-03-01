@@ -4,68 +4,17 @@ import threading
 
 from queue import *
 
+from NetServer import NetServer
 from Commands import *
 from Dungeon import Dungeon
+
+net = NetServer()
 
 messageQueue = Queue()
 
 clientIndex = 0
 currentClients = {}
 currentClientsLock = threading.Lock()
-
-
-def clientReceive(clientsocket):
-    print("clientReceive running")
-    clientValid = True
-    dungeon = Dungeon()# Creates new Dungeon for each user | in future use one
-    while clientValid == True:
-        try:
-            # Read the incoming data
-            data = clientsocket.recv(4096)
-            inputStr = data.decode("utf-8")
-
-            # Split by spaces
-            userInput = inputStr.split(' ')
-            userInput = [x for x in userInput if x != '']
-
-            user_command = userInput[0].lower()
-
-            if user_command == 'go':
-                direction = dungeon.PhraseToDirection(userInput[1].lower())
-
-                if dungeon.CurrentRoom().IsValidDirection(direction):
-                    dungeon.MovePlayer(direction)
-
-                    msg = "move- " + str(currentClients[clientsocket]) + " " + str(dungeon.currentRoomID)
-                    currentClientsLock.acquire()
-                    messageQueue.put(ClientMessage(clientsocket, msg))
-                    currentClientsLock.release()
-
-            else:
-                # No command - so using chat
-                currentClientsLock.acquire()
-                msg = "client-" + str(currentClients[clientsocket]) + ":"
-                msg += data.decode("utf-8")
-                currentClientsLock.release()
-                messageQueue.put(ClientMessage(clientsocket,msg))
-
-            print("received client msg:" + inputStr);
-
-        except socket.error:
-            print("clientReceive - lost client");
-            clientValid = False
-            messageQueue.put(ClientLost(clientsocket))
-
-
-def acceptClients(serversocket):
-    print("acceptThread running")
-    while(True):
-        (clientsocket, address) = serversocket.accept()
-        messageQueue.put(ClientJoined(clientsocket))
-
-        thread = threading.Thread(target=clientReceive, args=(clientsocket,))
-        thread.start()
-
 
 def handleClientLost(command):
     currentClientsLock.acquire()
@@ -124,36 +73,8 @@ def handleClientMessage(command):
     currentClientsLock.release()
 
 def main():
-    serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    try:
-        if len(sys.argv) > 1:
-            serversocket.bind((sys.argv[1], 8222))
-        else:
-            serversocket.bind(("127.0.0.1", 8222))
-    except socket.error:
-        print("Can't start server, is another instance running?")
-        exit()
-
-    serversocket.listen(5)
-
-    thread = threading.Thread(target=acceptClients,args=(serversocket,))
-    thread.start()
-
-    while True:
-
-        if messageQueue.qsize()>0:
-            print("Processing client commands")
-            command = messageQueue.get()
-
-            if isinstance(command, ClientJoined):
-                handleClientJoined(command)
-
-            if isinstance(command, ClientLost):
-                handleClientLost(command)
-
-            if isinstance(command, ClientMessage):
-                handleClientMessage(command)
+    pass
+    #net
 
 
 if __name__ == "__main__":

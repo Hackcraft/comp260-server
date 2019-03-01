@@ -7,7 +7,6 @@
 
 	It holds:
 		Generic data which is added to it.
-		The person who should receive the data.
 		A tag to determine what should happen.
 '''
 import json
@@ -18,7 +17,6 @@ class NetPacket:
 
 	def __init__(self):
 		self.data = Queue()
-		self.receiver = None # not needed?
 		self.tag = None
 
 	# Data
@@ -33,16 +31,6 @@ class NetPacket:
 	def Append(self, data):
 		self.data.put(data)
 
-	# Receiver
-	def HasReceiver(self):
-		return self.GetReceiver() != None
-
-	def GetReceiver(self):
-		return self.receiver
-
-	def SetReceiver(self, receiver):
-		self.receiver = receiver
-
 	# Tag
 	def HasTag(self):
 		return self.GetTag() != None
@@ -55,7 +43,7 @@ class NetPacket:
 
 	# Validity
 	def IsValid(self):
-		return self.HasReceiver() and self.HasTag()
+		return self.HasTag()
 
 	# Encodings
 	def Encode(self):

@@ -7,6 +7,7 @@ import threading
 
 from queue import *
 from NetPacket import NetPacket
+from Hook import Hook
 
 class NetBase:
 
@@ -20,6 +21,9 @@ class NetBase:
 	# Receivers
 	receiversLock = threading.Lock()
 	receivers = {} # tag : func
+
+	# Hooks
+	hook = Hook()
 
 	def __init__(self):
 		self.netPacket = NetPacket()
@@ -44,20 +48,19 @@ class NetBase:
 		self.netPacket.SetTag(tag)
 
 	def Send(self, targetSocket):
-		#try:
-		#	targetSocket.send(netPacket.encode())
-		#except socket.error:
-		pass
+		raise NotImplementedError()
 
 	def Receive(self, tag, func):
 		# Add to the list of receivers
 		self.receiversLock.acquire()
-		self.receivers[tag] = func
+		self.receivers[tag] = func # args(NetPacket, ClientSocket or None)
 		self.receiversLock.release()
 
-	def Hook(self, tag, func):
-		# Add to the list of hooks
-		raise NotImplementedError()
+	def RunReceiver(self, netPacket, clientSocket = None):
+		self.receiversLock.acquire()
+		if netPacket.GetTag() in self.receivers:
+			self.receivers[netPacket.GetTag()](netPacket, clientSocket)
+		self.receiversLock.release()
 
 
 

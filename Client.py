@@ -12,99 +12,9 @@ import socket
 import threading
 import time
 
-
-class ClientData:
-    def __init__(self):
-        self.serverSocket = None
-        self.connectedToServer = False
-        self.running = True
-        self.incomingMessage = ""
-        self.currentBackgroundThread = None
-        self.currentReceivethread = None
-
-
-clientData = ClientData()
-clientDataLock = threading.Lock()
-clientID = None
-roomID = None
-dungeon = Dungeon()
-
-def receiveThread(clientData):
-    print("receiveThread running")
-    global clientID
-
-    while clientData.connectedToServer is True:
-        try:
-            data = clientData.serverSocket.recv(4096)
-            text = ""
-            text += data.decode("utf-8")
-
-            testSplit = text.split(' ')
-
-            # Assign client id to client
-            if clientID is None and testSplit[0].lower() == "you-":
-                clientID = testSplit[1].lower()
-
-            elif testSplit[0].lower() == "move-":
-                otherClientID = testSplit[1]
-                otherRoomID = testSplit[2]
-
-
-                # If another client
-                if otherClientID != clientID:
-                    if otherRoomID == roomID:
-                        clientDataLock.acquire()
-                        clientData.incomingMessage += str(otherClientID) + " has entered your room."
-                        clientDataLock.release()
-
-                else:
-                    roomID = otherRoomID
-
-                    roomData = dungeon.roomMap[int(roomID)]
-                    clientDataLock.acquire()
-                    clientData.incomingMessage += roomData.Description() + "\nDirections: " + roomData.DirectionsParser()
-                    clientDataLock.release()
-
-
-
-            else:
-                clientDataLock.acquire()
-                clientData.incomingMessage += text
-                clientDataLock.release()
-                print(text)
-        except socket.error:
-            print("Server lost")
-            clientData.connectedToServer = False
-            clientData.serverSocket = None
-
-def backgroundThread(clientData):
-    print("backgroundThread running")
-    clientData.connectedToServer = False
-
-    while (clientData.connectedToServer is False) and (clientData.running is True):
-        try:
-
-            if clientData.serverSocket is None:
-                clientData.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-            if clientData.serverSocket is not None:
-                clientData.serverSocket.connect(("127.0.0.1", 8222))
-
-            clientData.connectedToServer = True
-            clientData.currentReceivethread = threading.Thread(target=receiveThread, args=(clientData,))
-            clientData.currentReceivethread.start()
-
-            print("connected")
-
-            while clientData.connectedToServer is True:
-                time.sleep(1.0)
-
-        except socket.error:
-            print("no connection")
-            time.sleep(1)
-            clientDataLock.acquire()
-            clientData.incomingMessage = "\nNoServer"
-            clientDataLock.release()
+from NetClient import NetClient
+net = NetClient()
+clientData = net.clientData
 
 class Example(QWidget):
 
@@ -166,7 +76,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     clientData.ex = Example()
 
-    clientData.currentBackgroundThread = threading.Thread(target=backgroundThread, args=(clientData,))
-    clientData.currentBackgroundThread.start()
+    #clientData.currentBackgroundThread = threading.Thread(target=backgroundThread, args=(clientData,))
+    #clientData.currentBackgroundThread.start()
 
     sys.exit(app.exec_())

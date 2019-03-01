@@ -16,7 +16,6 @@ netBase1 = NetBase()
 netBase2 = NetBase()
 
 # Two instances can be referenced
-print(len(netBase1.netInstances))
 assert len(netBase1.netInstances) == 2
 
 # Can add receivers
