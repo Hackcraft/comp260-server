@@ -12,10 +12,14 @@ class NetBase:
 
 	# References to all instances created
 	instancesLock = threading.Lock()
-	netInstances = []
+	netInstances = [] # All instances of NetBase and derivatives
 
 	# Incomming
 	incommingQueue = Queue()
+
+	# Receivers
+	receiversLock = threading.Lock()
+	receivers = {} # tag : func
 
 	def __init__(self):
 		self.netPacket = NetPacket()
@@ -25,17 +29,36 @@ class NetBase:
 		self.instancesLock.release()
 
 	def __del__(self):
+		self.Remove()
+
+	def Remove(self):
 		# Remove this instance from the global list
 		self.instancesLock.acquire()
-		self.netInstances.remove(self)
+		try:
+			self.netInstances.remove(self)
+		except:
+			pass
 		self.instancesLock.release()
 
 	def Start(self, tag = None):
 		self.netPacket.SetTag(tag)
 
 	def Send(self, targetSocket):
-		try:
-			targetSocket.send(netPacket.encode())
-		except socket.error:
+		#try:
+		#	targetSocket.send(netPacket.encode())
+		#except socket.error:
+		pass
+
+	def Receive(self, tag, func):
+		# Add to the list of receivers
+		self.receiversLock.acquire()
+		self.receivers[tag] = func
+		self.receiversLock.release()
+
+	def Hook(self, tag, func):
+		# Add to the list of hooks
+		raise NotImplementedError()
+
+
 
 
