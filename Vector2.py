@@ -28,3 +28,6 @@ class Vector2:
 
     def __str__(self):
         return str(self.x) + " " + str(self.y)
+
+    def __hash__(self):
+        return hash((self.x, self.y))

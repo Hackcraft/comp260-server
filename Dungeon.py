@@ -1,7 +1,7 @@
 from Room import Room
 
 class Dungeon:
-    CHUNK_LENGTH = 2
+    CHUNK_LENGTH = 2 # for future architecture
 
     def __init__(self):
         self.currentRoomID = 0

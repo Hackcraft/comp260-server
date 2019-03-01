@@ -18,3 +18,4 @@ script:
   - python Tests/Test_NetBase.py
 
   - python Tests/Test_Hook.py
+  - python Tests/Test_Language.py
