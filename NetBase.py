@@ -47,6 +47,9 @@ class NetBase:
 	def Start(self, tag = None):
 		self.netPacket.SetTag(tag)
 
+	def Write(self, string):
+		self.netPacket.Append(string)
+
 	def Send(self, targetSocket):
 		raise NotImplementedError()
 

@@ -76,6 +76,10 @@ def main():
     pass
     #net
 
+def HandleChat(netPacket, clientSocket):
+    print(HandleChat)
+
+net.Receive("Chat", HandleChat)
 
 if __name__ == "__main__":
     main()

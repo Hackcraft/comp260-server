@@ -75,3 +75,9 @@ class NetClient(NetBase):
                 time.sleep(1)
                 #self.clientDataLock.acquire()
                 #self.clientDataLock.release()
+
+    def Send(self, targetSocket):
+        try:
+            targetSocket.send(self.netPacket.Encode())
+        except socket.error:
+            print("Failed to send data to client!")

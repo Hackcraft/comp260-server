@@ -41,7 +41,10 @@ class Example(QWidget):
     def userInputOnUserPressedReturn(self):
         entry = self.userInput.text()
         print("User entry: "+entry)
-        clientData.serverSocket.send(bytes(entry, 'utf-8') )
+        #clientData.serverSocket.send(bytes(entry, 'utf-8') )
+        net.Start("Chat")
+        net.Write(entry)
+        net.Send(clientData.serverSocket)
         self.userInput.setText("")
 
 
