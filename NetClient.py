@@ -46,6 +46,7 @@ class NetClient(NetBase):
                 self.RunReceiver(netPacket)
             except socket.error:
                 print("Server lost")
+                hook.Run("DisconnectedFromServer", (self.ip, self.port))
                 clientData.connectedToServer = False
                 clientData.serverSocket = None
 
@@ -66,6 +67,7 @@ class NetClient(NetBase):
                 clientData.receiveThread.start()
 
                 print("connected")
+                hook.Run("ConnectedToServer", (self.ip, self.port))
 
                 while clientData.connectedToServer is True:
                     time.sleep(1.0)
@@ -76,8 +78,21 @@ class NetClient(NetBase):
                 #self.clientDataLock.acquire()
                 #self.clientDataLock.release()
 
-    def Send(self, targetSocket):
+    def Send(self):
         try:
-            targetSocket.send(self.netPacket.Encode())
+            self.clientData.serverSocket.send(self.netPacket.Encode())
         except socket.error:
-            print("Failed to send data to client!")
+            print("Failed to send data to server!")
+
+    def CloseConnection(self):
+        if self.clientData.serverSocket is not None:
+            self.clientData.serverSocket.close()
+            self.clientData.serverSocket = None
+            self.clientData.connectedToServer = False
+            self.clientData.running = False
+
+            if self.clientData.currentReceivethread is not None:
+                self.clientData.currentReceivethread.join()
+
+            if self.clientData.currentBackgroundThread is not None:
+                self.clientData.currentBackgroundThread.join()

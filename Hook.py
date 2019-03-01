@@ -18,13 +18,18 @@ class Hook:
 			self.hooks[eventName] = {}
 		self.hooks[eventName][identifier] = func
 		self.hooksLock.release()
+		print("Adding " + eventName + identifier)
 
 	def Run(self, eventName, args = ()):
 		output = None
 		self.hooksLock.acquire()
+		print("acquire?")
+		print(str(eventName in self.hooks))
 		if eventName in self.hooks:
+			print("eventName in self.hooks?")
 			output = None
 			for identifier in self.hooks[eventName]:
+				print(eventName + " " + identifier)
 				output = self.hooks[eventName][identifier](args)
 				if output != None:
 					break

@@ -45,6 +45,7 @@ class NetBase:
 		self.instancesLock.release()
 
 	def Start(self, tag = None):
+		self.netPacket = NetPacket()
 		self.netPacket.SetTag(tag)
 
 	def Write(self, string):

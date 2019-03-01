@@ -7,6 +7,7 @@ from queue import *
 from NetServer import NetServer
 from Commands import *
 from Dungeon import Dungeon
+from Player import Player
 
 net = NetServer()
 
@@ -21,9 +22,12 @@ def handleClientLost(command):
     lostClient = currentClients[command.socket]
     print("Removing lost client: client-"+str(lostClient))
 
-    for key in currentClients:
-        if key != command.socket:
-            key.send(bytes("client-"+str(lostClient) + " has left the chat room", 'utf-8'))
+    for clientSocket in currentClients:
+        if clientSocket != command.socket:
+            string = "client-" + lostClient.GetName() + " has left the chat room\n"
+            net.Start("Chat")
+            net.Write(outputToUser)
+            net.Send(clientSocket)
 
     del currentClients[command.socket]
 
@@ -33,30 +37,33 @@ def handleClientJoined(command):
     global clientIndex
 
     currentClientsLock.acquire()
-    currentClients[command.socket] = clientIndex
+    currentClients[command.socket] = Player(command.socket, "Client " + str(clientIndex))
     clientIndex += 1
 
-    print("Client joined: client-" + str(currentClients[command.socket]))
+    # Log the player connection
+    print("Client joined: client-" + currentClients[command.socket].GetName())
 
+    # Personal Welcome message
     outputToUser = "Welcome to chat, speak your brains here! "
     outputToUser += "Currently all you can do is type to others and use the 'go' command followed by the direction (north/east/south/west)\n"
-    outputToUser += "You are: client-" + str(currentClients[command.socket]) +"\n"
+    outputToUser += "You are: client-" + currentClients[command.socket].GetName() +"\n"
     outputToUser += "Present in chat:\n"
 
-
+    # Personal list of connected clients
     for key in currentClients:
-        outputToUser += "client-" + str(currentClients[key]) + "\n"
+        outputToUser += "client-" + currentClients[key].GetName() + "\n"
 
-    command.socket.send(bytes(outputToUser, 'utf-8') )
+    net.Start("Chat")
+    net.Write(outputToUser)
+    net.Send(command.socket)
 
-    for key in currentClients:
-        if key != command.socket:
-            key.send(bytes("client-"+str(currentClients[command.socket]) + " has joined the chat room", 'utf-8'))
-
-    # Tell them who they are
-    command.socket.send(("you- " + str(currentClients[command.socket])).encode())
-    # Tell them which room to start in
-    command.socket.send(("move- " + str(currentClients[command.socket]) + " 0" ).encode())
+    # Notify everyone of the new arrival
+    for clientSocket in currentClients:
+        if clientSocket != command.socket:
+            string = "client-" + currentClients[command.socket].GetName() + " has joined the chat room\n"
+            net.Start("Chat")
+            net.Write(outputToUser)
+            net.Send(clientSocket)
 
     currentClientsLock.release()
 
@@ -76,10 +83,24 @@ def main():
     pass
     #net
 
-def HandleChat(netPacket, clientSocket):
-    print(HandleChat)
+# Say
+def HandleSay(netPacket, clientSocket):
+    pass
 
-net.Receive("Chat", HandleChat)
+net.Receive("say", HandleSay)
+
+# Go
+def HandleGO(netPacket, clientSocket):
+    pass
+
+net.Receive("go", HandleGO)
+
+# Help
+def HandleHelp(netPacket, clientSocket):
+    pass
+
+net.Receive("help", HandleGO)
+
 
 if __name__ == "__main__":
     main()
