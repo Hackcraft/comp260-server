@@ -1,172 +1,160 @@
 import sys
-import PyQt5.QtCore
-import PyQt5.QtWidgets
-
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5 import QtCore
-from Dungeon import Dungeon
-
-
 import socket
 import threading
-import time
+
+from queue import *
+
+from Commands import *
+from Dungeon import Dungeon
+
+messageQueue = Queue()
+
+clientIndex = 0
+currentClients = {}
+currentClientsLock = threading.Lock()
 
 
-class ClientData:
-    def __init__(self):
-        self.serverSocket = None
-        self.connectedToServer = False
-        self.running = True
-        self.incomingMessage = ""
-        self.currentBackgroundThread = None
-        self.currentReceivethread = None
-
-
-clientData = ClientData()
-clientDataLock = threading.Lock()
-clientID = None
-roomID = None
-dungeon = Dungeon()
-
-def receiveThread(clientData):
-    print("receiveThread running")
-    global clientID
-
-    while clientData.connectedToServer is True:
+def clientReceive(clientsocket):
+    print("clientReceive running")
+    clientValid = True
+    dungeon = Dungeon()# Creates new Dungeon for each user | in future use one
+    while clientValid == True:
         try:
-            data = clientData.serverSocket.recv(4096)
-            text = ""
-            text += data.decode("utf-8")
+            # Read the incoming data
+            data = clientsocket.recv(4096)
+            inputStr = data.decode("utf-8")
 
-            testSplit = text.split(' ')
+            # Split by spaces
+            userInput = inputStr.split(' ')
+            userInput = [x for x in userInput if x != '']
 
-            # Assign client id to client
-            if clientID is None and testSplit[0].lower() == "you-":
-                clientID = testSplit[1].lower()
+            user_command = userInput[0].lower()
 
-            elif testSplit[0].lower() == "move-":
-                otherClientID = testSplit[1]
-                otherRoomID = testSplit[2]
+            if user_command == 'go':
+                direction = dungeon.PhraseToDirection(userInput[1].lower())
 
+                if dungeon.CurrentRoom().IsValidDirection(direction):
+                    dungeon.MovePlayer(direction)
 
-                # If another client
-                if otherClientID != clientID:
-                    if otherRoomID == roomID:
-                        clientDataLock.acquire()
-                        clientData.incomingMessage += str(otherClientID) + " has entered your room."
-                        clientDataLock.release()
-
-                else:
-                    roomID = otherRoomID
-
-                    roomData = dungeon.roomMap[int(roomID)]
-                    clientDataLock.acquire()
-                    clientData.incomingMessage += roomData.Description() + "\nDirections: " + roomData.DirectionsParser()
-                    clientDataLock.release()
-
-
+                    msg = "move- " + str(currentClients[clientsocket]) + " " + str(dungeon.currentRoomID)
+                    currentClientsLock.acquire()
+                    messageQueue.put(ClientMessage(clientsocket, msg))
+                    currentClientsLock.release()
 
             else:
-                clientDataLock.acquire()
-                clientData.incomingMessage += text
-                clientDataLock.release()
-                print(text)
+                # No command - so using chat
+                currentClientsLock.acquire()
+                msg = "client-" + str(currentClients[clientsocket]) + ":"
+                msg += data.decode("utf-8")
+                currentClientsLock.release()
+                messageQueue.put(ClientMessage(clientsocket,msg))
+
+            print("received client msg:" + inputStr);
+
         except socket.error:
-            print("Server lost")
-            clientData.connectedToServer = False
-            clientData.serverSocket = None
+            print("clientReceive - lost client");
+            clientValid = False
+            messageQueue.put(ClientLost(clientsocket))
 
-def backgroundThread(clientData):
-    print("backgroundThread running")
-    clientData.connectedToServer = False
 
-    while (clientData.connectedToServer is False) and (clientData.running is True):
+def acceptClients(serversocket):
+    print("acceptThread running")
+    while(True):
+        (clientsocket, address) = serversocket.accept()
+        messageQueue.put(ClientJoined(clientsocket))
+
+        thread = threading.Thread(target=clientReceive, args=(clientsocket,))
+        thread.start()
+
+
+def handleClientLost(command):
+    currentClientsLock.acquire()
+    lostClient = currentClients[command.socket]
+    print("Removing lost client: client-"+str(lostClient))
+
+    for key in currentClients:
+        if key != command.socket:
+            key.send(bytes("client-"+str(lostClient) + " has left the chat room", 'utf-8'))
+
+    del currentClients[command.socket]
+
+    currentClientsLock.release()
+
+def handleClientJoined(command):
+    global clientIndex
+
+    currentClientsLock.acquire()
+    currentClients[command.socket] = clientIndex
+    clientIndex += 1
+
+    print("Client joined: client-" + str(currentClients[command.socket]))
+
+    outputToUser = "Welcome to chat, speak your brains here! "
+    outputToUser += "Currently all you can do is type to others and use the 'go' command followed by the direction (north/east/south/west)\n"
+    outputToUser += "You are: client-" + str(currentClients[command.socket]) +"\n"
+    outputToUser += "Present in chat:\n"
+
+
+    for key in currentClients:
+        outputToUser += "client-" + str(currentClients[key]) + "\n"
+
+    command.socket.send(bytes(outputToUser, 'utf-8') )
+
+    for key in currentClients:
+        if key != command.socket:
+            key.send(bytes("client-"+str(currentClients[command.socket]) + " has joined the chat room", 'utf-8'))
+
+    # Tell them who they are
+    command.socket.send(("you- " + str(currentClients[command.socket])).encode())
+    # Tell them which room to start in
+    command.socket.send(("move- " + str(currentClients[command.socket]) + " 0" ).encode())
+
+    currentClientsLock.release()
+
+def handleClientMessage(command):
+    print("client message: "+command.message)
+
+    currentClientsLock.acquire()
+    for key in currentClients:
         try:
-
-            if clientData.serverSocket is None:
-                clientData.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-            if clientData.serverSocket is not None:
-                clientData.serverSocket.connect(("127.0.0.1", 8222))
-
-            clientData.connectedToServer = True
-            clientData.currentReceivethread = threading.Thread(target=receiveThread, args=(clientData,))
-            clientData.currentReceivethread.start()
-
-            print("connected")
-
-            while clientData.connectedToServer is True:
-                time.sleep(1.0)
-
+            key.send(bytes(command.message,'utf-8'))
         except socket.error:
-            print("no connection")
-            time.sleep(1)
-            clientDataLock.acquire()
-            clientData.incomingMessage = "\nNoServer"
-            clientDataLock.release()
+            messageQueue.put(ClientLost(key))
 
-class Example(QWidget):
+    currentClientsLock.release()
 
-    def __init__(self):
-        super().__init__()
+def main():
+    serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        self.chatOutput = 0
-        self.userInput = 0
+    try:
+        if len(sys.argv) > 1:
+            serversocket.bind((sys.argv[1], 8222))
+        else:
+            serversocket.bind(("127.0.0.1", 8222))
+    except socket.error:
+        print("Can't start server, is another instance running?")
+        exit()
 
-        self.initUI()
+    serversocket.listen(5)
 
-        self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self.timerEvent)
-        self.timer.start(100)
+    thread = threading.Thread(target=acceptClients,args=(serversocket,))
+    thread.start()
+
+    while True:
+
+        if messageQueue.qsize()>0:
+            print("Processing client commands")
+            command = messageQueue.get()
+
+            if isinstance(command, ClientJoined):
+                handleClientJoined(command)
+
+            if isinstance(command, ClientLost):
+                handleClientLost(command)
+
+            if isinstance(command, ClientMessage):
+                handleClientMessage(command)
 
 
-    def timerEvent(self):
-        if clientData.incomingMessage != "":
-            clientDataLock.acquire()
-            self.chatOutput.appendPlainText(clientData.incomingMessage)
-            clientData.incomingMessage = ""
-            clientDataLock.release()
-
-    def userInputOnUserPressedReturn(self):
-        entry = self.userInput.text()
-        print("User entry: "+entry)
-        clientData.serverSocket.send(bytes(entry, 'utf-8') )
-        self.userInput.setText("")
-
-
-    def initUI(self):
-        self.userInput = QLineEdit(self)
-        self.userInput.setGeometry(10, 360, 580, 30)
-        self.userInput.returnPressed.connect(self.userInputOnUserPressedReturn)
-
-        self.chatOutput = QPlainTextEdit(self)
-        self.chatOutput.setGeometry(10, 10, 580, 300)
-        self.chatOutput.setReadOnly(True)
-
-        self.setGeometry(300, 300, 600, 400)
-        self.setWindowTitle('Multi user Dungeon')
-        self.show()
-
-    def closeEvent(self, event):
-
-        if clientData.serverSocket is not None:
-            clientData.serverSocket.close()
-            clientData.serverSocket = None
-            clientData.connectedToServer = False
-            clientData.running = False
-
-            if clientData.currentReceivethread is not None:
-                clientData.currentReceivethread.join()
-
-            if clientData.currentBackgroundThread is not None:
-                clientData.currentBackgroundThread.join()
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    clientData.ex = Example()
-
-    clientData.currentBackgroundThread = threading.Thread(target=backgroundThread, args=(clientData,))
-    clientData.currentBackgroundThread.start()
-
-    sys.exit(app.exec_())
+if __name__ == "__main__":
+    main()

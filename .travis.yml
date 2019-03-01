@@ -12,3 +12,5 @@ script:
 
   - python Tests/Test_Vector2.py
   - python Tests/Test_Entity.py
+  - python Tests/Test_Player.py
+  - python Tests/Test_NetPacket.py

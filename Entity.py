@@ -8,13 +8,13 @@ class Entity():
 		self.ID = 0
 
 	def SetPos(self, vec2):
-		if type(vec2) == Vector2:
 			self.pos = vec2
-		else:
-			raise TypeError('Entity.SetPos only accepts Vector2 - given{}'.format(type(vec2)))
 
 	def GetPos(self):
 		return self.pos
+
+	def Move(self, vec2):
+		self.pos = self.pos + vec2
 
 	def GetX(self):
 		return self.pos.x
