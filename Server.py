@@ -5,7 +5,7 @@ import threading
 from queue import *
 
 from NetServer import NetServer
-from Commands import *
+#from Commands import *
 from Dungeon import Dungeon
 from Player import Player
 

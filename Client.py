@@ -19,9 +19,6 @@ net = NetClient()
 hook = Hook()
 clientData = net.clientData
 
-currentMessage = ""
-currentMessageLock = threading.Lock()
-
 
 class Commands:
 
@@ -60,6 +57,9 @@ class Example(QWidget):
 
     commands = Commands()
 
+    currentMessage = "test"
+    currentMessageLock = threading.Lock()
+
     def __init__(self):
         super().__init__()
 
@@ -69,16 +69,18 @@ class Example(QWidget):
         self.initUI()
 
         self.timer = QtCore.QTimer()
+        self.timer.setInterval(1000)
         self.timer.timeout.connect(self.timerEvent)
+        self.timer.start()
         self.timer.start(100)
 
     def timerEvent(self):
-        if currentMessage != "":
+        if self.currentMessage != "":
             print("hi")
-            currentMessageLock.acquire()
-            self.chatOutput.appendPlainText(currentMessage)
-            currentMessage = ""
-            currentMessageLock.release()
+            self.currentMessageLock.acquire()
+            self.chatOutput.appendPlainText(self.currentMessage)
+            self.currentMessage = ""
+            self.currentMessageLock.release()
 
     def userInputOnUserPressedReturn(self):
         entry = self.userInput.text()
@@ -94,8 +96,8 @@ class Example(QWidget):
             self.commands.Execute(command, argStr)
             print("Execute")
         else:
-            self.chatOutput.appendPlainyuText("Invalid command: " + command + "\n")
-            self.chatOutput.appendPlainText("Type help for a list of commands.")
+            self.chatOutput.appendPlainText("Invalid command: " + command)
+            self.chatOutput.appendPlainText("Type help for a list of commands.\n")
 
         self.userInput.setText("")
 
@@ -115,6 +117,13 @@ class Example(QWidget):
 
     def closeEvent(self, event):
         net.CloseConnection()
+
+    def HandleHelp(self, netPacket):
+        self.currentMessageLock.acquire()
+        self.currentMessage = netPacket.Release()
+        self.currentMessageLock.release()
+
+    net.Receive("help", HandleHelp)
 
 #def ConnectedToServer(args):
  #   print("Connected to " + args[0] + ":" + str(args[1]))
