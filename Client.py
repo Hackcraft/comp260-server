@@ -18,6 +18,9 @@ from Hook import Hook
 net = NetClient()
 hook = Hook()
 clientData = net.clientData
+isConnected = False
+currentMessage = ""
+currentMessageLock = threading.Lock()
 
 
 class Commands:
@@ -57,9 +60,6 @@ class Example(QWidget):
 
     commands = Commands()
 
-    currentMessage = "test"
-    currentMessageLock = threading.Lock()
-
     def __init__(self):
         super().__init__()
 
@@ -69,18 +69,24 @@ class Example(QWidget):
         self.initUI()
 
         self.timer = QtCore.QTimer()
-        self.timer.setInterval(1000)
         self.timer.timeout.connect(self.timerEvent)
-        self.timer.start()
         self.timer.start(100)
 
     def timerEvent(self):
-        if self.currentMessage != "":
+        global currentMessage
+        if currentMessage != "":
             print("hi")
-            self.currentMessageLock.acquire()
-            self.chatOutput.appendPlainText(self.currentMessage)
-            self.currentMessage = ""
-            self.currentMessageLock.release()
+            currentMessageLock.acquire()
+            self.chatOutput.appendPlainText(currentMessage)
+            currentMessage = ""
+            currentMessageLock.release()
+
+        if net.clientData.connectedToServer:
+            self.setWindowTitle('Multi user Dungeon | Connected to server')
+        else:
+            self.setWindowTitle('Multi user Dungeon | Not connected to server')
+
+
 
     def userInputOnUserPressedReturn(self):
         entry = self.userInput.text()
@@ -96,8 +102,8 @@ class Example(QWidget):
             self.commands.Execute(command, argStr)
             print("Execute")
         else:
-            self.chatOutput.appendPlainText("Invalid command: " + command)
-            self.chatOutput.appendPlainText("Type help for a list of commands.\n")
+            self.chatOutput.appendPlainText("Invalid command: " + command + "\n")
+            self.chatOutput.appendPlainText("Type help for a list of commands.")
 
         self.userInput.setText("")
 
@@ -118,26 +124,23 @@ class Example(QWidget):
     def closeEvent(self, event):
         net.CloseConnection()
 
-    def HandleHelp(self, netPacket):
-        self.currentMessageLock.acquire()
-        self.currentMessage = netPacket.Release()
-        self.currentMessageLock.release()
-
-    net.Receive("help", HandleHelp)
-
-#def ConnectedToServer(args):
- #   print("Connected to " + args[0] + ":" + str(args[1]))
+def ConnectedToServer(args):
+    print("Connected to " + args[0] + ":" + str(args[1]))
+    global currentMessage
+    currentMessageLock.acquire()
+    currentMessage = "test"
+    currentMessageLock.release()
 
 
-#hook.Add("ConnectedToServer", "UI Updater", ConnectedToServer)
+hook.Add("ConnectedToServer", "UI Updater", ConnectedToServer)
 
-#def HandleHelp(netPacket):
-    #currentMessageLock.acquire()
-    #currentMessage = netPacket.Release()
-    #currentMessageLock.release()
+def HandleHelp(netPacket):
+    currentMessageLock.acquire()
+    currentMessage = netPacket.Release()
+    currentMessageLock.release()
  #   pass
 
-#net.Receive("help", HandleHelp)
+net.Receive("help", HandleHelp)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
