@@ -1,69 +1,30 @@
+from Vector2 import Vector2
 from Room import Room
+from Language import Language
 
 class Dungeon:
-    CHUNK_LENGTH = 2 # for future architecture
+    CHUNK_LENGTH = 2  # for future architecture
 
     def __init__(self):
-        self.currentRoomID = 0
-        self.roomMap = {}
+        self.roomMap = {}  # starts from bottom left - to far right then up
         self.LoadAndSetDefaultRooms()
 
     def LoadAndSetDefaultRooms(self):
         self.roomMap = [
-            Room(1, [(0, 1), (1, 0)], "This is room 1"), # bottom left
-            Room(2, [(0, 1), (-1, 0)], "This is room 2"), # bottom right
-            Room(3, [(0, -1), (1, 0)], "This is room 3"), # top left
-            Room(4, [(0, -1), (-1, 0)], "This is room 4") # top right
+            Room(1, [Room.EAST, Room.NORTH], "This is room 1"),  # bottom left
+            Room(2, [Room.WEST, Room.NORTH], "This is room 2"),  # bottom right
+            Room(3, [Room.EAST, Room.SOUTH], "This is room 3"),  # top left
+            Room(4, [Room.WEST, Room.SOUTH], "This is room 4")   # top right
         ]
 
-        self.currentRoomID = 0
+    def IsValidPosition(self, vec2):
+        return self.PositionToRoom(vec2) != None
 
-    def CurrentRoom(self):
-        return self.roomMap[self.currentRoomID];
+    def PositionToRoom(self, vec2):
+        if self.PositionToRoomIndex(vec2) in self.roomMap:
+            return self.roomMap[self.PositionToRoomIndex(vec2)]
+        else:
+            return None
 
-    def MovePlayer(self, direction):
-        if self.CurrentRoom().IsValidDirection(direction):
-            roomIndex = self.DirectionToRoomIndex(direction)
-            print(roomIndex)
-            self.currentRoomID = roomIndex
-
-    def PhraseToDirection(self, phrase):
-        if phrase == "north":
-            return (0, 1)
-        elif phrase == "north west":
-            return (-1, 1)
-        elif phrase == "north east":
-            return (1, 1)
-
-        elif phrase == "south":
-            return (0, -1)
-        elif phrase == "south west":
-            return (-1, -1)
-        elif phrase == "south east":
-            return (1, -1)
-
-        elif phrase == "west":
-            return (-1, 0)
-        elif phrase == "east":
-            return (1, 0)
-
-    # Doesn't account for moving chunks yet
-    def DirectionToRoomIndex(self, direction):
-        if direction == (0, 1):
-            return self.currentRoomID + self.CHUNK_LENGTH
-        elif direction == (-1, 1):
-            return "North West"
-        elif direction == (1, 1):
-            return "North East"
-
-        elif direction == (0, -1):
-            return self.currentRoomID - self.CHUNK_LENGTH
-        elif direction == (-1, -1):
-            return "South West"
-        elif direction == (1, -1):
-            return "South East"
-
-        elif direction == (-1, 0):
-            return self.currentRoomID - 1
-        elif direction == (1, 0):
-            return self.currentRoomID + 1
+    def PositionToRoomIndex(self, vec2):
+        return vec2.x + (vec2.y * self.CHUNK_LENGTH)

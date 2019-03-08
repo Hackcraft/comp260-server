@@ -11,52 +11,28 @@
 
     Support Language in future
 '''
+import threading
 
+from Vector2 import Vector2
+from Language import Language
 
 class Room:
+
+    NORTH = Language.BaseWordToValue("direction", "north")
+    EAST = Language.BaseWordToValue("direction", "east")
+    SOUTH = Language.BaseWordToValue("direction", "south")
+    WEST = Language.BaseWordToValue("direction", "west")
+
+    NORTH_EAST = Language.BaseWordToValue("direction", "north east")
+    NORTH_WEST = Language.BaseWordToValue("direction", "north west")
+
+    SOUTH_EAST = Language.BaseWordToValue("direction", "south east")
+    SOUTH_WEST = Language.BaseWordToValue("direction", "south west")
+
     def __init__(self, id, connections, description):
         self.id = id
         self.connections = connections
         self.description = description
 
-    def Description(self):
-        return self.description
-
-    def IsValidDirection(self, directionToFind):
-        isValid = False
-
-        for direction in self.connections:
-            if direction == directionToFind:
-                isValid = True
-                break
-
-        return isValid
-
-    def DirectionsParser(self):
-        directions = ""
-
-        for direction in self.connections:
-            directions += self.DirectionParser(direction) + " | "
-
-        return directions
-
-    def DirectionParser(self, direction):
-        # x, y
-        if direction == (0, 1):
-            return "North"
-        elif direction == (-1, 1):
-            return "North West"
-        elif direction == (1, 1):
-            return "North East"
-
-        elif direction == (0, -1):
-            return "South"
-        elif direction == (-1, -1):
-            return "South West"
-        elif direction == (1, -1):
-            return "South East"
-
-        elif direction == (-1, 0):
-            return "West"
-        elif direction == (1, 0):
-            return "East"
+        self.players = []
+        self.playersLock = threading.Lock()

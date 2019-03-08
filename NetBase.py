@@ -60,12 +60,15 @@ class NetBase:
 		self.receivers[tag] = func # args(NetPacket, ClientSocket or None)
 		self.receiversLock.release()
 
-	def RunReceiver(self, netPacket, clientSocket = None):
+	def RunReceiver(self, netPacket, clientSocket):
 		self.receiversLock.acquire()
 		if netPacket.GetTag() in self.receivers:
-			self.receivers[netPacket.GetTag()](netPacket, clientSocket)
+			# If running on the client - not socket will be passed
+			if clientSocket is None:
+				self.receivers[netPacket.GetTag()](netPacket)
+			else:
+				self.receivers[netPacket.GetTag()](netPacket, clientSocket)
 		self.receiversLock.release()
-
 
 
 

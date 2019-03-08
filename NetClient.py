@@ -43,7 +43,7 @@ class NetClient(NetBase):
                 data = clientData.serverSocket.recv(4096)
                 netPacket.DecodeAndLoad(data)
 
-                self.RunReceiver(netPacket)
+                self.RunReceiver(netPacket, None)
             except socket.error:
                 print("Server lost")
                 hook.Run("DisconnectedFromServer", (self.ip, self.port))

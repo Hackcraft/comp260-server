@@ -10,6 +10,7 @@ from Dungeon import Dungeon
 
 import socket
 import threading
+from queue import *
 import time
 
 from NetClient import NetClient
@@ -17,8 +18,8 @@ from Hook import Hook
 
 net = NetClient()
 hook = Hook()
-clientData = net.clientData
 
+messageQueue = Queue() # messages to put in UI
 
 class Commands:
 
@@ -56,9 +57,7 @@ class Commands:
 class Example(QWidget):
 
     commands = Commands()
-
-    currentMessage = "test"
-    currentMessageLock = threading.Lock()
+    global messageQueue
 
     def __init__(self):
         super().__init__()
@@ -75,12 +74,8 @@ class Example(QWidget):
         self.timer.start(100)
 
     def timerEvent(self):
-        if self.currentMessage != "":
-            print("hi")
-            self.currentMessageLock.acquire()
-            self.chatOutput.appendPlainText(self.currentMessage)
-            self.currentMessage = ""
-            self.currentMessageLock.release()
+        if messageQueue.qsize() > 0:
+            self.chatOutput.appendPlainText(messageQueue.get())
 
     def userInputOnUserPressedReturn(self):
         entry = self.userInput.text()
@@ -125,19 +120,26 @@ class Example(QWidget):
 
     net.Receive("help", HandleHelp)
 
-#def ConnectedToServer(args):
- #   print("Connected to " + args[0] + ":" + str(args[1]))
+def ConnectedToServer(args):
+    print("Connected to " + args[0] + ":" + str(args[1]))
+    messageQueue.put("Connected to " + args[0] + ":" + str(args[1]))
 
 
-#hook.Add("ConnectedToServer", "UI Updater", ConnectedToServer)
+hook.Add("ConnectedToServer", "UI Updater", ConnectedToServer)
 
-#def HandleHelp(netPacket):
-    #currentMessageLock.acquire()
-    #currentMessage = netPacket.Release()
-    #currentMessageLock.release()
- #   pass
+def HandleHelp(netPacket):
+    print("Packet")
+    messageQueue.put(netPacket.Release())  # release is weird
 
-#net.Receive("help", HandleHelp)
+
+net.Receive("help", HandleHelp)
+
+
+def HandleChat(netPacket):
+    messageQueue.put(netPacket.Release())
+
+
+net.Receive("Chat", HandleChat)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

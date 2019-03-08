@@ -2,11 +2,11 @@ from Entity import Entity
 
 class Player(Entity):
 
-    def __init__(self, clientSocket, clientName = "unassigned"):
+    def __init__(self, socket, clientName = "unassigned"):
         super().__init__()
-        self.SetTag("player")
-        self.clientSocket = clientSocket
+        self.tag = "player"
+        self.socket = socket
         self.name = clientName
+        self.isConnected = False
 
-    def GetName(self):
-    	return str(self.name)
+
