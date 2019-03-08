@@ -1,8 +1,8 @@
 class Vector2:
 
     def __init__(self, x, y):
-        self.x = x
-        self.y = y
+        self.x = float(x)
+        self.y = float(y)
 
     def __add__(self, other_vector2):
         return Vector2(self.x + other_vector2.x, self.y + other_vector2.y)
@@ -13,16 +13,16 @@ class Vector2:
     def __eq__(self, other_vector2):
         if not isinstance(other_vector2, Vector2):
             return False
-        return self.x == other_vector2.x and self.y == other_vector2.y
+        return float(self.x) == float(other_vector2.x) and float(self.y) == float(other_vector2.y)
 
     def __ne__(self, other_vector2):
         return not (self == other_vector2)
 
     def __getitem__(self, index):
         if index == 0:
-            return self.x
+            return float(self.x)
         elif index == 1:
-            return self.y
+            return float(self.y)
         else:
             return None
 
@@ -30,4 +30,4 @@ class Vector2:
         return str(self.x) + " " + str(self.y)
 
     def __hash__(self):
-        return hash((self.x, self.y))
+        return hash((float(self.x), float(self.y)))

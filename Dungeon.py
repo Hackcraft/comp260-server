@@ -21,10 +21,12 @@ class Dungeon:
         return self.PositionToRoom(vec2) != None
 
     def PositionToRoom(self, vec2):
-        if self.PositionToRoomIndex(vec2) in self.roomMap:
+        index = self.PositionToRoomIndex(vec2)
+        if self.roomMap[index] is not None and index < len(self.roomMap):
             return self.roomMap[self.PositionToRoomIndex(vec2)]
         else:
             return None
 
     def PositionToRoomIndex(self, vec2):
-        return vec2.x + (vec2.y * self.CHUNK_LENGTH)
+        return int(vec2.x + (vec2.y * self.CHUNK_LENGTH))
+

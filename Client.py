@@ -15,6 +15,8 @@ import time
 
 from NetClient import NetClient
 from Hook import Hook
+from Vector2 import Vector2
+from Language import Language
 
 net = NetClient()
 hook = Hook()
@@ -51,7 +53,7 @@ class Commands:
 
     def Execute(self, command, argStr = ""):
         net.Start(command)
-        net.Write(argStr)
+        net.Write("".join(self.CleanUpSpaces(argStr)))
         net.Send()
 
 class Example(QWidget):
@@ -140,6 +142,29 @@ def HandleChat(netPacket):
 
 
 net.Receive("Chat", HandleChat)
+
+
+def EnteredRoom(netPacket):
+    connections = netPacket.Release()
+    description = netPacket.Release()
+
+    directions = connections.split(",")
+    languageDirs = ""
+    for i in range(0, len(directions)):
+        coords = directions[i].split(" ")
+        if len(coords) == 2:
+            vec2 = Vector2(coords[0], coords[1])
+            languageDirs += Language.ValueToWord("direction", vec2) + ","
+    languageDirs = languageDirs[:-1]
+
+    messageQueue.put("Entered new room: \n" +
+                     description + "\n" +
+                     "You can move: \n" +
+                     languageDirs
+    )
+
+
+net.Receive("EnteredRoom", EnteredRoom)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

@@ -1,7 +1,6 @@
 '''
 	Directions to language
 	In future will support multiple different languages
-	In future will read txt file
 
 	Class is not thread safe
 '''
@@ -82,5 +81,7 @@ class Language:
 	@staticmethod
 	def ValueToBaseWord(category, value):
 		return Language.baseLanguageReversed[category][value]
+
+Language()
 
 

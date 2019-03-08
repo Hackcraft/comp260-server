@@ -9,4 +9,7 @@ class Player(Entity):
         self.name = clientName
         self.isConnected = False
 
-
+    def __eq__(self, otherPlayer):
+        if not isinstance(otherPlayer, Player):
+            return False
+        return self.socket == otherPlayer.socket
