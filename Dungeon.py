@@ -45,5 +45,5 @@ class Dungeon:
         return vec2
 
     def GlobalPositionFromRoom(self, room):
-        return room.localPos * (room.chunkPos * self.CHUNK_LENGTH)
+        return room.localPos + (room.chunkPos * self.CHUNK_LENGTH)
 

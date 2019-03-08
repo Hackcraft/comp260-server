@@ -10,6 +10,7 @@ from Language import Language
 #from Commands import *
 from Dungeon import Dungeon
 from Player import Player
+from Vector2 import Vector2
 
 net = NetServer()
 hook = Hook()
@@ -23,7 +24,7 @@ def handleClientLost(player):
     net.playersLock.acquire()
     for key in net.players:
         if net.players[key].socket != player.socket:
-            string = player.name + " has left the chat room\n"
+            string = player.name + " has left the server\n"
             net.Start("Chat")
             net.Write(string)
             net.Send(net.players[key])
@@ -38,9 +39,8 @@ def handleClientJoined(player):
 
     # Personal Welcome message
     outputToUser = "Welcome to chat, speak your brains here! "
-    outputToUser += "Currently all you can do is type to others and use the 'go' command followed by the direction (north/east/south/west)\n"
     outputToUser += "You are: " + player.name +"\n"
-    outputToUser += "Present in chat:\n"
+    outputToUser += "Present in server:\n"
 
     # Personal list of connected clients
     net.playersLock.acquire()
@@ -108,7 +108,7 @@ def HandleGO(netPacket, player):
     print(direction)
     print(netDir)
 
-    oldPos = player.pos
+    oldPos = Vector2(player.pos.x, player.pos.y)
     newPos = player.pos + direction
 
     print("oldPos: " + str(oldPos))
@@ -122,7 +122,8 @@ def HandleGO(netPacket, player):
         SendRoomInformation(player, room)
 
         hook.Run("PlayerJoinedRoom", (player, room))
-        hook.Run("PlayerLeftRoom", (player, dungeon.PositionToRoom(oldPos)))
+        if oldPos != newPos:
+            hook.Run("PlayerLeftRoom", (player, dungeon.PositionToRoom(oldPos)))
 
     print("Finished GO")
 
@@ -146,6 +147,11 @@ def SendRoomInformation(player, room):
 def PlayerJoinedRoom(turp):
     player = turp[0]
     room = turp[1]
+
+    print(room.localPos)
+    roomPos = dungeon.GlobalPositionFromRoom(room)
+
+    print("Joined: " + str(roomPos))
     print("Running joined room")
     # Other players
     net.playersLock.acquire()
@@ -154,7 +160,7 @@ def PlayerJoinedRoom(turp):
 
     # Notify them
     for key in net.players:
-        if net.players[key].pos == player.pos and net.players[key] != player:
+        if net.players[key].pos == roomPos and net.players[key] != player:
             net.Start("Chat")
             net.Write(player.name + " has joined the room!")
             net.Send(net.players[key])
@@ -172,6 +178,8 @@ def PlayerLeftRoom(turp):
     room = turp[1]
     roomPos = dungeon.GlobalPositionFromRoom(room)
 
+    print("Left: " + str(roomPos))
+
     print("Running left room")
     # Other players
     net.playersLock.acquire()
@@ -180,7 +188,7 @@ def PlayerLeftRoom(turp):
 
     # Notify them
     for key in net.players:
-        if net.players[key].pos != roomPos and net.players[key] != player:
+        if net.players[key].pos == roomPos and net.players[key] != player:
             net.Start("Chat")
             net.Write(player.name + " has left the room!")
             net.Send(net.players[key])
@@ -190,6 +198,33 @@ def PlayerLeftRoom(turp):
     print("Leave room lock released")
 
 hook.Add("PlayerLeftRoom", "ChatMessage", PlayerLeftRoom)
+
+
+def ShowPlayers(netPakcet, player):
+    playersStr = ""
+    playerCount = 0
+
+    net.playersLock.acquire()
+    for key in net.players:
+        if net.players[key].pos == player.pos and net.players[key] != player:
+            playersStr += net.players[key].name + ", "
+            playerCount += 1
+    net.playersLock.release()
+
+    if playerCount == 0:
+        playersStr = "No players in this room."
+    else:
+        playersStr = "Players in room: " + playersStr
+        playersStr = playersStr[:-2]
+
+    net.Start("Chat")
+    net.Write(playersStr)
+    net.Send(player)
+
+
+net.Receive("search", ShowPlayers)
+
+
 
 
 if __name__ == "__main__":

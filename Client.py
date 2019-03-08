@@ -31,11 +31,12 @@ class Commands:
     LOCAL_COMMAND = "RunLocalCommand"
 
     commands = {
-        "say" : NET_COMMAND,
-        "help": NET_COMMAND,
+        "say": NET_COMMAND,
+        "search": NET_COMMAND,
 
         "directions": LOCAL_COMMAND,
-        "go": LOCAL_COMMAND
+        "go": LOCAL_COMMAND,
+        "help": LOCAL_COMMAND
     }
 
     def GetFirstWord(self, string = ""):
@@ -55,8 +56,13 @@ class Commands:
     def CleanUpSpaces(self, string):
         return [x for x in string if x != '']
 
-    def IsCommand(self, command):
-        return command in self.commands
+    def GetCommand(self, word):
+        command = Language.WordToValue("command", word)
+        if command is not None:
+            baseCommand = Language.ValueToBaseWord("command", command)
+            if baseCommand is not None and baseCommand in self.commands:
+                return baseCommand
+        return None
 
     def Execute(self, command, argStr = ""):
         if self.commands[command] == self.NET_COMMAND:
@@ -94,6 +100,10 @@ class Example(QWidget):
     def timerEvent(self):
         if messageQueue.qsize() > 0:
             self.chatOutput.appendPlainText(messageQueue.get())
+        if net.clientData.connectedToServer:
+            self.setWindowTitle('Multi user Dungeon | Connected to: ' + str(net.ip) + ":" + str(net.port))
+        else:
+            self.setWindowTitle('Multi user Dungeon | Not connected to server')
 
     def userInputOnUserPressedReturn(self):
         entry = self.userInput.text()
@@ -102,11 +112,13 @@ class Example(QWidget):
         command = self.commands.GetFirstWord(entry)
         print("GetFirstWord")
 
-        if self.commands.IsCommand(command):
+        baseCommand = self.commands.GetCommand(command)
+
+        if baseCommand is not None:
             print("IsCommand")
             argStr = self.commands.GetAllButFirstWord(entry)
             print("GetAllButFirstWord")
-            self.commands.Execute(command, argStr)
+            self.commands.Execute(baseCommand, argStr)
             print("Execute")
         else:
             self.chatOutput.appendPlainText("Invalid command: " + command)
@@ -147,7 +159,7 @@ hook.Add("ConnectedToServer", "UI Updater", ConnectedToServer)
 
 def HandleHelp(netPacket):
     print("Packet")
-    messageQueue.put(netPacket.Release())  # release is weird
+    messageQueue.put(netPacket.Release())
 
 
 net.Receive("help", HandleHelp)
@@ -230,6 +242,13 @@ def Move(argStr):
 
 
 hook.Add("RunLocalCommand_" + "go", "MoveLocalPlayer", Move)
+
+
+def Help(argStr):
+    commands = ", ".join(Commands.commands)
+    messageQueue.put("The commands are: " + commands)
+
+hook.Add("RunLocalCommand_" + "help", "ShowHelp", Help)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

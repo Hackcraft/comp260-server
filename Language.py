@@ -28,7 +28,12 @@ class Language:
 		},
 		"command":
 		{
-			"go": "go"
+			"say": "say",
+			"search": "search",
+
+			"directions": "directions",
+			"go": "go",
+			"help": "help"
 		}
 	}
 
@@ -68,6 +73,7 @@ class Language:
 					return Language.languages[Language.baseLanguage][category][baseWord]
 		return None
 
+	# Returns the value associated with the word provided in the base language
 	@staticmethod
 	def BaseWordToValue(category, word):
 		if word in Language.languages[Language.baseLanguage][category]:
@@ -86,6 +92,7 @@ class Language:
 					return Language.languageReversed[category][baseWord]
 		return None
 
+	# Returns the word associated with the value provided in the base language
 	@staticmethod
 	def ValueToBaseWord(category, value):
 		if value in Language.baseLanguageReversed[category]:

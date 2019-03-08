@@ -5,10 +5,16 @@ class Vector2:
         self.y = int(y)
 
     def __add__(self, other_vector2):
-        return Vector2(self.x + other_vector2.x, self.y + other_vector2.y)
+        if isinstance(other_vector2, Vector2):
+            return Vector2(self.x + other_vector2.x, self.y + other_vector2.y)
+        elif isinstance(other_vector2, int):
+            return Vector2(self.x + other_vector2, self.y + other_vector2)
 
     def __sub__(self, other_vector2):
-        return Vector2(self.x - other_vector2.x, self.y - other_vector2.y)
+        if isinstance(other_vector2, Vector2):
+            return Vector2(self.x - other_vector2.x, self.y - other_vector2.y)
+        elif isinstance(other_vector2, int):
+            return Vector2(self.x - other_vector2, self.y - other_vector2)
 
     def __eq__(self, other_vector2):
         if not isinstance(other_vector2, Vector2):
