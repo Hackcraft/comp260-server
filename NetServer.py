@@ -42,11 +42,15 @@ class NetServer(NetBase):
 
         while clientValid == True:
             try:
+                print("read damn it")
                 # Read the incoming data
                 data = clientSocket.recv(4096)
-
+                print("Decoding")
                 # Load it into a readable format
                 netPacket.DecodeAndLoad(data)
+
+                print("Received")
+                print(netPacket.GetTag())
 
                 # Pass to the right Receive function
                 self.RunReceiver(netPacket, clientSocket)
@@ -84,12 +88,12 @@ class NetServer(NetBase):
             self.players[clientSocket] = player
             self.playersLock.release()
 
-            # Tell stuff they joined
-            hook.Run("PlayerJoined", player)
-
             # Start listening for the client
             thread = threading.Thread(target=self.ClientReceive, args=(clientSocket,))
             thread.start()
+
+            # Tell stuff they joined
+            hook.Run("PlayerJoined", player)
 
     def Send(self, targetSocket):
         try:

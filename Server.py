@@ -45,12 +45,13 @@ def handleClientJoined(player):
     # Personal list of connected clients
     net.playersLock.acquire()
     for key in net.players:
-        outputToUser += net.players[key].name + "\n"
+        if net.players[key] != player:
+            outputToUser += net.players[key].name + "\n"
     net.playersLock.release()
 
     net.Start("Chat")
     net.Write(outputToUser)
-    net.Send(player.socket)
+    net.Send(player)
 
     # Notify everyone of the new arrival
     net.playersLock.acquire()
@@ -59,8 +60,12 @@ def handleClientJoined(player):
             string = player.name + " has joined the chat room\n"
             net.Start("Chat")
             net.Write(string)
-            net.Send(net.players[key].socket)
+            net.Send(net.players[key])
     net.playersLock.release()
+
+    # Room information
+    print("infos")
+    SendRoomInformation(player, dungeon.PositionToRoom(player.pos))
 
 
 hook.Add("PlayerJoined", "WelcomeMessages", handleClientJoined)
@@ -97,22 +102,35 @@ net.Receive("help", HandleHelp)
 
 # Go
 def HandleGO(netPacket, player):
-    direction = Language.BaseWordToValue("direction", netPacket.Release())
+    netDir = netPacket.Release()
+    direction = Language.BaseWordToValue("direction", netDir)
+
+    print(direction)
+    print(netDir)
 
     oldPos = player.pos
     newPos = player.pos + direction
+
+    print("oldPos: " + str(oldPos))
+    print("newPos: " + str(newPos))
+
+    print("Valid: " + str(dungeon.IsValidPosition(newPos)))
 
     if dungeon.IsValidPosition(newPos):
         player.pos = newPos
         room = dungeon.PositionToRoom(player.pos)
         SendRoomInformation(player, room)
 
-    hook.Run("PlayerLeftRoom", (player, dungeon.PositionToRoom(oldPos)))
+        hook.Run("PlayerJoinedRoom", (player, room))
+        hook.Run("PlayerLeftRoom", (player, dungeon.PositionToRoom(oldPos)))
+
+    print("Finished GO")
 
 net.Receive("go", HandleGO)
 
 
 def SendRoomInformation(player, room):
+    print("SendRoomInformation")
     # Moving player
     roomStr = ""
     for x in range(0, len(room.connections)):
@@ -120,27 +138,30 @@ def SendRoomInformation(player, room):
     roomStr = roomStr[:-1] #  Remove the last comma
 
     net.Start("EnteredRoom")
-    net.Write(roomStr) # connections
-    net.Write(room.description) # description
+    net.Write(roomStr)  # connections
+    net.Write(room.description)  # description
     net.Send(player)
-
-    hook.Run("PlayerJoinedRoom", (player, room))
 
 
 def PlayerJoinedRoom(turp):
     player = turp[0]
     room = turp[1]
+    print("Running joined room")
     # Other players
     net.playersLock.acquire()
-    players = net.players
-    net.playersLock.release()
+
+    print("Join room lock acquired")
 
     # Notify them
-    for key in players:
-        if players[key].pos == player.pos and players[key] != player:
+    for key in net.players:
+        if net.players[key].pos == player.pos and net.players[key] != player:
             net.Start("Chat")
             net.Write(player.name + " has joined the room!")
-            net.Send(players[key])
+            net.Send(net.players[key])
+
+    net.playersLock.release()
+
+    print("Join room lock released")
 
 
 hook.Add("PlayerJoinedRoom", "ChatMessage", PlayerJoinedRoom)
@@ -149,18 +170,24 @@ hook.Add("PlayerJoinedRoom", "ChatMessage", PlayerJoinedRoom)
 def PlayerLeftRoom(turp):
     player = turp[0]
     room = turp[1]
+    roomPos = dungeon.GlobalPositionFromRoom(room)
+
+    print("Running left room")
     # Other players
     net.playersLock.acquire()
-    players = net.players
-    net.playersLock.release()
+
+    print("Leave room lock acquired")
 
     # Notify them
-    for key in players:
-        if players[key].pos != player.pos and players[key] != player:
+    for key in net.players:
+        if net.players[key].pos != roomPos and net.players[key] != player:
             net.Start("Chat")
             net.Write(player.name + " has left the room!")
-            net.Send(players[key])
+            net.Send(net.players[key])
 
+    net.playersLock.release()
+
+    print("Leave room lock released")
 
 hook.Add("PlayerLeftRoom", "ChatMessage", PlayerLeftRoom)
 

@@ -17,18 +17,25 @@ from NetClient import NetClient
 from Hook import Hook
 from Vector2 import Vector2
 from Language import Language
+from Room import Room
 
 net = NetClient()
 hook = Hook()
+room = None
 
 messageQueue = Queue() # messages to put in UI
 
 class Commands:
 
+    NET_COMMAND = "RunNetCommand"
+    LOCAL_COMMAND = "RunLocalCommand"
+
     commands = {
-        "say" : True,
-        "go" : True,
-        "help" : True
+        "say" : NET_COMMAND,
+        "help": NET_COMMAND,
+
+        "directions": LOCAL_COMMAND,
+        "go": LOCAL_COMMAND
     }
 
     def GetFirstWord(self, string = ""):
@@ -52,9 +59,18 @@ class Commands:
         return command in self.commands
 
     def Execute(self, command, argStr = ""):
+        if self.commands[command] == self.NET_COMMAND:
+            self.RunNetCommand(command, argStr)
+        elif self.commands[command] == self.LOCAL_COMMAND:
+            self.RunLocalCommand(command, argStr)
+
+    def RunNetCommand(self, command, argStr = ""):
         net.Start(command)
         net.Write("".join(self.CleanUpSpaces(argStr)))
         net.Send()
+
+    def RunLocalCommand(self, command, argStr = ""):
+        hook.Run("RunLocalCommand_" + command, argStr)
 
 class Example(QWidget):
 
@@ -145,17 +161,24 @@ net.Receive("Chat", HandleChat)
 
 
 def EnteredRoom(netPacket):
+    global room
+
     connections = netPacket.Release()
     description = netPacket.Release()
 
     directions = connections.split(",")
+    directionVectors = []
     languageDirs = ""
     for i in range(0, len(directions)):
         coords = directions[i].split(" ")
         if len(coords) == 2:
             vec2 = Vector2(coords[0], coords[1])
+            directionVectors.append(vec2)
             languageDirs += Language.ValueToWord("direction", vec2) + ","
     languageDirs = languageDirs[:-1]
+
+    # Update our local room
+    room = Room(0, directionVectors, description)
 
     messageQueue.put("Entered new room: \n" +
                      description + "\n" +
@@ -165,6 +188,48 @@ def EnteredRoom(netPacket):
 
 
 net.Receive("EnteredRoom", EnteredRoom)
+
+
+def ShowDirections(argStr):
+    print("hi")
+    global room
+
+    if room is None:
+        return
+
+    languageDirs = ""
+    for direction in room.connections:
+        languageDirs += Language.ValueToWord("direction", direction) + ","
+    languageDirs = languageDirs[:-1]
+
+    messageQueue.put("You can move: \n" + languageDirs)
+
+
+hook.Add("RunLocalCommand_" + "directions", "ShowDirections", ShowDirections)
+
+
+def Move(argStr):
+    global room
+
+    direction = Language.WordToValue("direction", argStr)
+
+    if direction is not None:
+        print("direction!")
+        if room is not None:
+            print("ROOM!")
+            if direction in room.connections:
+                print("GO!")
+                print(Language.ValueToBaseWord("direction", direction))
+                net.Start("go")
+                net.Write(Language.ValueToBaseWord("direction", direction))
+                net.Send()
+                return
+
+    # Direction not found
+    messageQueue.put("Not a valid direction: " + argStr)
+
+
+hook.Add("RunLocalCommand_" + "go", "MoveLocalPlayer", Move)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

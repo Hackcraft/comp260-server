@@ -63,6 +63,7 @@ class NetBase:
 	def RunReceiver(self, netPacket, clientSocket):
 		self.receiversLock.acquire()
 		if netPacket.GetTag() in self.receivers:
+			print("Running: " + netPacket.GetTag())
 			# If running on the client - not socket will be passed
 			if clientSocket is None:
 				self.receivers[netPacket.GetTag()](netPacket)

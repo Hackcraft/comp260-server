@@ -81,6 +81,7 @@ class NetClient(NetBase):
     def Send(self):
         try:
             self.clientData.serverSocket.send(self.netPacket.Encode())
+            print("Sending: " + self.netPacket.GetTag())
         except socket.error:
             print("Failed to send data to server!")
 

@@ -33,7 +33,8 @@ class Room:
         self.id = id
         self.connections = connections
         self.description = description
+        self.localPos = Vector2(0, 0)
+        self.chunkPos = Vector2(0, 0)
 
         self.players = []
         self.playersLock = threading.Lock()
-

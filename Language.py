@@ -62,12 +62,17 @@ class Language:
 		if Language.language == Language.baseLanguage:
 			return Language.BaseWordToValue(category, word)
 		else:
-			baseWord = Language.languages[Language.language][category][word]
-			return Language.languages[Language.baseLanguage][category][baseWord]
+			if word in Language.languages[Language.language][category]:
+				baseWord = Language.languages[Language.language][category][word]
+				if baseWord in Language.languages[Language.baseLanguage][category]:
+					return Language.languages[Language.baseLanguage][category][baseWord]
+		return None
 
 	@staticmethod
 	def BaseWordToValue(category, word):
-		return Language.languages[Language.baseLanguage][category][word]
+		if word in Language.languages[Language.baseLanguage][category]:
+			return Language.languages[Language.baseLanguage][category][word]
+		return None
 
 	# Returns the word associated with the value provided in the current selected language
 	@staticmethod
@@ -75,12 +80,17 @@ class Language:
 		if Language.language == Language.baseLanguage:
 			return Language.ValueToBaseWord(category, value)
 		else:
-			baseWord = Language.baseLanguageReversed[category][value]
-			return Language.languageReversed[category][baseWord]
+			if value in Language.baseLanguageReversed[category]:
+				baseWord = Language.baseLanguageReversed[category][value]
+				if baseWord in Language.languageReversed[category]:
+					return Language.languageReversed[category][baseWord]
+		return None
 
 	@staticmethod
 	def ValueToBaseWord(category, value):
-		return Language.baseLanguageReversed[category][value]
+		if value in Language.baseLanguageReversed[category]:
+			return Language.baseLanguageReversed[category][value]
+		return None
 
 Language()
 
