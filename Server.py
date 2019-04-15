@@ -7,12 +7,21 @@ from queue import *
 from NetServer import NetServer
 from Hook import Hook
 from Language import Language
-#from Commands import *
 from Dungeon import Dungeon
 from Player import Player
 from Vector2 import Vector2
 
-net = NetServer()
+net = None
+
+# Allow for custom ip and port to be defined on startup
+if __name__ == "__main__":
+    argCount = len(sys.argv)
+    ip = argCount > 1 and sys.argv[1] or NetServer.defaultIP
+    port = int(argCount > 2 and sys.argv[2] or NetServer.defaultPort)
+    net = NetServer(ip, port)
+else:
+    net = NetServer()
+
 hook = Hook()
 dungeon = Dungeon()
 
@@ -103,6 +112,7 @@ net.Receive("help", HandleHelp)
 # Go
 def HandleGO(netPacket, player):
     netDir = netPacket.Release()
+
     direction = Language.BaseWordToValue("direction", netDir)
 
     print(direction)
@@ -224,8 +234,12 @@ def ShowPlayers(netPakcet, player):
 
 net.Receive("search", ShowPlayers)
 
-
-
-
-if __name__ == "__main__":
-    main()
+while True:
+    _input = input()
+    if _input == "stop":
+        # Save data
+        # Close connections (server closing)
+        print("Stopping server")
+        net.Stop()
+        sys.exit()
+    print(_input)

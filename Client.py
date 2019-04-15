@@ -18,73 +18,27 @@ from Hook import Hook
 from Vector2 import Vector2
 from Language import Language
 from Room import Room
+from Command import Command
 
-net = NetClient()
+net = NetClient("127.0.0.1", 8223)
 hook = Hook()
 room = None
+concommand = Command()
 
 messageQueue = Queue() # messages to put in UI
 
-class Commands:
-
-    NET_COMMAND = "RunNetCommand"
-    LOCAL_COMMAND = "RunLocalCommand"
-
-    commands = {
-        "say": NET_COMMAND,
-        "search": NET_COMMAND,
-
-        "directions": LOCAL_COMMAND,
-        "go": LOCAL_COMMAND,
-        "help": LOCAL_COMMAND
-    }
-
-    def GetFirstWord(self, string = ""):
-        userInput = self.SplitUpString(string)
-        return userInput[0]
-
-    def GetAllButFirstWord(self, string):
-        userInput = self.SplitUpString(string)
-        userInput.pop(0)
-        return " ".join(userInput)
-
-    def SplitUpString(self, string):
-        string = string.split(' ')
-        string = self.CleanUpSpaces(string)
-        return string
-
-    def CleanUpSpaces(self, string):
-        return [x for x in string if x != '']
-
-    def GetCommand(self, word):
-        command = Language.WordToValue("command", word)
-        if command is not None:
-            baseCommand = Language.ValueToBaseWord("command", command)
-            if baseCommand is not None and baseCommand in self.commands:
-                return baseCommand
-        return None
-
-    def Execute(self, command, argStr = ""):
-        if self.commands[command] == self.NET_COMMAND:
-            self.RunNetCommand(command, argStr)
-        elif self.commands[command] == self.LOCAL_COMMAND:
-            self.RunLocalCommand(command, argStr)
-
-    def RunNetCommand(self, command, argStr = ""):
-        net.Start(command)
-        net.Write("".join(self.CleanUpSpaces(argStr)))
-        net.Send()
-
-    def RunLocalCommand(self, command, argStr = ""):
-        hook.Run("RunLocalCommand_" + command, argStr)
+#
+#
+#       UI
+#
+#
 
 class Example(QWidget):
-
-    commands = Commands()
     global messageQueue
 
     def __init__(self):
         super().__init__()
+        self.concommand = Command()
 
         self.chatOutput = 0
         self.userInput = 0
@@ -108,20 +62,12 @@ class Example(QWidget):
     def userInputOnUserPressedReturn(self):
         entry = self.userInput.text()
 
-        print("here")
-        command = self.commands.GetFirstWord(entry)
-        print("GetFirstWord")
+        firstWord = concommand.StringToArgs(entry)[0]
 
-        baseCommand = self.commands.GetCommand(command)
-
-        if baseCommand is not None:
-            print("IsCommand")
-            argStr = self.commands.GetAllButFirstWord(entry)
-            print("GetAllButFirstWord")
-            self.commands.Execute(baseCommand, argStr)
-            print("Execute")
+        if concommand.IsCommand(firstWord):
+            concommand.Run(None, firstWord, entry)
         else:
-            self.chatOutput.appendPlainText("Invalid command: " + command)
+            self.chatOutput.appendPlainText("Invalid command: " + firstWord)
             self.chatOutput.appendPlainText("Type help for a list of commands.\n")
 
         self.userInput.setText("")
@@ -143,12 +89,11 @@ class Example(QWidget):
     def closeEvent(self, event):
         net.CloseConnection()
 
-    def HandleHelp(self, netPacket):
-        self.currentMessageLock.acquire()
-        self.currentMessage = netPacket.Release()
-        self.currentMessageLock.release()
-
-    net.Receive("help", HandleHelp)
+#
+#
+#       Hooks
+#
+#
 
 def ConnectedToServer(args):
     print("Connected to " + args[0] + ":" + str(args[1]))
@@ -156,6 +101,12 @@ def ConnectedToServer(args):
 
 
 hook.Add("ConnectedToServer", "UI Updater", ConnectedToServer)
+
+#
+#
+#       net.Receive
+#
+#
 
 def HandleHelp(netPacket):
     print("Packet")
@@ -201,8 +152,13 @@ def EnteredRoom(netPacket):
 
 net.Receive("EnteredRoom", EnteredRoom)
 
+#
+#
+#       Commands
+#
+#
 
-def ShowDirections(argStr):
+def ShowDirections(player, command, args, argStr):
     print("hi")
     global room
 
@@ -217,13 +173,12 @@ def ShowDirections(argStr):
     messageQueue.put("You can move: \n" + languageDirs)
 
 
-hook.Add("RunLocalCommand_" + "directions", "ShowDirections", ShowDirections)
+concommand.Add("directions", ShowDirections)
 
 
-def Move(argStr):
+def Move(player, command, args, argStr):
     global room
-
-    direction = Language.WordToValue("direction", argStr)
+    direction = Language.WordToValue("direction", concommand.StringToArgs(argStr)[1])  # Remove command from string
 
     if direction is not None:
         print("direction!")
@@ -241,14 +196,31 @@ def Move(argStr):
     messageQueue.put("Not a valid direction: " + argStr)
 
 
-hook.Add("RunLocalCommand_" + "go", "MoveLocalPlayer", Move)
+concommand.Add("go", Move)
 
 
-def Help(argStr):
-    commands = ", ".join(Commands.commands)
+def Help(player, command, args, argStr):
+    commands = ", ".join(concommand.commands)
     messageQueue.put("The commands are: " + commands)
 
-hook.Add("RunLocalCommand_" + "help", "ShowHelp", Help)
+
+concommand.Add("help", Help)
+
+
+def SendNetCommand(player, command, args, argStr):
+    net.Start(command)
+    net.Write(argStr)
+    net.Send()
+
+
+concommand.Add("say", SendNetCommand)
+concommand.Add("search", SendNetCommand)
+
+#
+#
+#       Main
+#
+#
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

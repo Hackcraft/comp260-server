@@ -18,6 +18,9 @@ class NetServer(NetBase):
     playersSinceStart = 0
     playersLock = threading.Lock()
 
+    defaultIP = "127.0.0.1"
+    defaultPort = 8222
+
     def __init__(self, ip = "127.0.0.1", port = 8222):
         if self.serverSocket == None:
             self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -25,8 +28,9 @@ class NetServer(NetBase):
             # Socket availability check
             try:
                 self.serverSocket.bind((ip, port))
-            except socket.error:
+            except socket.error as error:
                 print("Can't start server, is another instance running?")
+                print(str(error))
                 exit()
 
             self.serverSocket.listen(5)
@@ -45,15 +49,21 @@ class NetServer(NetBase):
                 print("read damn it")
                 # Read the incoming data
                 data = clientSocket.recv(4096)
-                print("Decoding")
-                # Load it into a readable format
-                netPacket.DecodeAndLoad(data)
 
-                print("Received")
-                print(netPacket.GetTag())
+                try:
 
-                # Pass to the right Receive function
-                self.RunReceiver(netPacket, clientSocket)
+                    print("Decoding")
+                    # Load it into a readable format
+                    netPacket.DecodeAndLoad(data)
+
+                    print("Received")
+                    print(netPacket.GetTag())
+
+                except:
+                    pass
+                else:
+                    # Pass to the right Receive function
+                    self.RunReceiver(netPacket, clientSocket)
             except socket.error:
                 print("ClientReceive - lost client");
                 clientValid = False
@@ -62,6 +72,9 @@ class NetServer(NetBase):
                 self.playersLock.acquire()
                 player = self.players[clientSocket]
                 self.playersLock.release()
+
+                # Stop their thread
+                player.thread.shutdown()
 
                 # Let stuff know they left
                 hook.Run("PlayerLost", player)
@@ -91,6 +104,7 @@ class NetServer(NetBase):
             # Start listening for the client
             thread = threading.Thread(target=self.ClientReceive, args=(clientSocket,))
             thread.start()
+            player.thread = thread
 
             # Tell stuff they joined
             hook.Run("PlayerJoined", player)
@@ -110,3 +124,9 @@ class NetServer(NetBase):
         self.playersLock.release()
 
         super().RunReceiver(netPacket, player)
+
+    def Stop(self):
+        self.serverSocket.shutdown(self.serverSocket.SHUT_RD)  # Shutdown, stopping any further receives
+        self.serverSocket.close()
+
+        self.acceptThread.shutdown()

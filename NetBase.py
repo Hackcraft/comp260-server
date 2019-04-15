@@ -22,9 +22,6 @@ class NetBase:
 	receiversLock = threading.Lock()
 	receivers = {} # tag : func
 
-	# Hooks
-	hook = Hook()
-
 	def __init__(self):
 		self.netPacket = NetPacket()
 		# Add this instance to the global list

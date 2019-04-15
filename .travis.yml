@@ -1,15 +1,26 @@
 language: python
 
 python:
-
   - "3.6"
+
+cache: pip
+
+services:
+  - mysql
+
+env:
+  - MYSQL_POOL=20 MYSQL_HOST=127.0.0.1 MYSQL_USER=root MYSQL_PASSWD='' MYSQL_DB=mud MYSQL_CHARSET=utf8
 
 before_install:
   - "pip install -U pip"
   - "export PYTHONPATH=$PYTHONPATH:$(pwd)"
 
-script:
+install: "pip install -e ."
 
+before_script:
+  - pip install -r requirements.txt
+
+script:
   - python Tests/Test_Vector2.py
   - python Tests/Test_Entity.py
   - python Tests/Test_Player.py
