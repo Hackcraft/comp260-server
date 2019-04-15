@@ -15,8 +15,6 @@ before_install:
   - "pip install -U pip"
   - "export PYTHONPATH=$PYTHONPATH:$(pwd)"
 
-install: "pip install -e ."
-
 before_script:
   - pip install -r requirements.txt
 
