@@ -10,7 +10,7 @@ db = Database("127.0.0.1", "root", "", "mud")
 db.Commit("CREATE TABLE IF NOT EXISTS test_tab ( `id` INT NOT NULL );", None)
 
 def FetchCallBack(data):
-    assert len(data) > 1
+    assert len(data) >= 1
 
 def CommitCallback(success):
     assert success == True
