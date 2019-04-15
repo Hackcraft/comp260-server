@@ -30,3 +30,5 @@ script:
 
   - python Tests/Test_Hook.py
   - python Tests/Test_Language.py
+
+  - python Tests/Test_Database.py
