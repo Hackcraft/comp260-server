@@ -20,7 +20,7 @@ from Language import Language
 from Room import Room
 from Command import Command
 
-net = NetClient("127.0.0.1", 8223)
+net = NetClient("127.0.0.1", 8222)
 hook = Hook()
 room = None
 concommand = Command()

@@ -46,24 +46,29 @@ class NetServer(NetBase):
 
         while clientValid == True:
             try:
-                print("read damn it")
                 # Read the incoming data
-                data = clientSocket.recv(4096)
+                packetID = clientSocket.recv(4)
+                packetID = packetID.decode("utf-8")
 
-                try:
+                if packetID == self.PACKET_ID:
 
-                    print("Decoding")
-                    # Load it into a readable format
-                    netPacket.DecodeAndLoad(data)
+                    dataSize = int.from_bytes(clientSocket.recv(2), "little")
 
-                    print("Received")
-                    print(netPacket.GetTag())
+                    data = clientSocket.recv(dataSize)
 
-                except:
-                    pass
-                else:
-                    # Pass to the right Receive function
-                    self.RunReceiver(netPacket, clientSocket)
+                    try:
+                        print("Decoding")
+                        # Load it into a readable format
+                        netPacket.DecodeAndLoad(data)
+
+                        print("Received")
+                        print(netPacket.GetTag())
+
+                    except:
+                        pass
+                    else:
+                        # Pass to the right Receive function
+                        self.RunReceiver(netPacket, clientSocket)
             except socket.error:
                 print("ClientReceive - lost client");
                 clientValid = False
@@ -112,9 +117,9 @@ class NetServer(NetBase):
     def Send(self, targetSocket):
         try:
             if type(targetSocket) is Player:
-                targetSocket.socket.send(self.netPacket.Encode())
+                super().Send(targetSocket.socket)
             else:
-                targetSocket.send(self.netPacket.Encode())
+                super().Send(targetSocket)
         except socket.error:
             print("Failed to send data to client!")
 

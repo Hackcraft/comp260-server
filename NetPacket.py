@@ -49,7 +49,8 @@ class NetPacket:
 	def Encode(self):
 		# Queue -> tag + List -> JSON -> encode
 		li = [self.tag] + list(self.data.queue)
-		return json.dumps(li).encode()
+		jsonPacket = json.dumps(li)
+		return len(jsonPacket).to_bytes(2, byteorder="little"), jsonPacket.encode()
 
 	def DecodeAndLoad(self, data):
 		decoded = self.Decode(data)

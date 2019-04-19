@@ -40,10 +40,28 @@ class NetClient(NetBase):
 
         while clientData.connectedToServer is True:
             try:
-                data = clientData.serverSocket.recv(4096)
-                netPacket.DecodeAndLoad(data)
+                # Read the incoming data
+                packetID = clientData.serverSocket.recv(4)
+                packetID = packetID.decode("utf-8")
 
-                self.RunReceiver(netPacket, None)
+                if packetID == self.PACKET_ID:
+
+                    dataSize = int.from_bytes(clientData.serverSocket.recv(2), "little")
+
+                    data = clientData.serverSocket.recv(dataSize)
+
+                    try:
+                        print("Decoding")
+                        # Load it into a readable format
+                        netPacket.DecodeAndLoad(data)
+
+                        print("Received")
+                        print(netPacket.GetTag())
+                    except:
+                        print("Server sent data which made no sense!")
+                        pass
+                    else:
+                        self.RunReceiver(netPacket, None)
             except socket.error:
                 print("Server lost")
                 hook.Run("DisconnectedFromServer", (self.ip, self.port))
@@ -80,7 +98,7 @@ class NetClient(NetBase):
 
     def Send(self):
         try:
-            self.clientData.serverSocket.send(self.netPacket.Encode())
+            super().Send(self.clientData.serverSocket)
             print("Sending: " + self.netPacket.GetTag())
         except socket.error:
             print("Failed to send data to server!")
