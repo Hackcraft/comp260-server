@@ -32,4 +32,4 @@ assert testVar == True
 # Removing one which doesn't exist won't error
 hook.Remove("Test", "boolTest")
 
-print("Test_Hook.py - pass")
+print(__file__ + " - pass")

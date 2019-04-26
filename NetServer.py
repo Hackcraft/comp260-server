@@ -3,6 +3,7 @@
 '''
 import socket
 import threading
+import warnings
 
 from NetBase import NetBase
 from NetPacket import NetPacket
@@ -71,7 +72,8 @@ class NetServer(NetBase):
                         player = self.players[clientSocket]
 
                         # Pass to the right Receive function
-                        self.RunReceiver(netPacket, player)
+                        self.inputQueue(player, netPacket)
+                        #self.RunReceiver(netPacket, player)
             except socket.error:
                 print("ClientReceive - lost client");
                 clientValid = False
@@ -111,6 +113,7 @@ class NetServer(NetBase):
 
             # Start listening for the client
             thread = threading.Thread(target=self.ClientReceive, args=(clientSocket,))
+            thread.daemon = True
             thread.start()
             player.thread = thread
 
@@ -126,6 +129,17 @@ class NetServer(NetBase):
         except socket.error:
             print("Failed to send data to client!")
 
+    def Receive(self, tag, func, condition = None):
+        # Warnings
+        if tag in self.receivers:
+            warnings.warn("Net receiver: " + tag + " already exists!", Warning)
+        if condition is None and isinstance(self, NetServer):
+            warnings.warn("No condition set for net receiver: " + tag + ". Potential for exploitation!", Warning, stacklevel=2)
+        # Add to the list of receivers
+        self.receiversLock.acquire()
+        self.receivers[tag] = (func, condition)
+        self.receiversLock.release()
+
     def RunReceiver(self, netPacket, player):
         self.playersLock.acquire()
         player = self.players[player.socket]
@@ -135,7 +149,10 @@ class NetServer(NetBase):
 
     def Stop(self):
         self.shouldFindClients = False
-        self.serverSocket.shutdown(self.serverSocket.SHUT_RD)  # Shutdown, stopping any further receives
+        self.serverSocket.shutdown(socket.SHUT_RD)  # Shutdown, stopping any further receives
         self.serverSocket.close()
 
         self.acceptThread.shutdown()
+
+    def __del__(self):
+        self.Stop()

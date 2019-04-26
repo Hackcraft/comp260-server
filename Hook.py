@@ -43,4 +43,3 @@ class Hook:
 			self.hooks[eventName].pop(identifier, None)
 		self.hooksLock.release()
 
-

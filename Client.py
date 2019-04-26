@@ -19,11 +19,14 @@ from Vector2 import Vector2
 from Language import Language
 from Room import Room
 from Command import Command
+from GameState import GameState
 
 net = NetClient("127.0.0.1", 8222)
 hook = Hook()
 room = None
 concommand = Command()
+
+gameState = GameState.LOGIN
 
 messageQueue = Queue() # messages to put in UI
 
@@ -175,6 +178,15 @@ def ClearScreen(player = None, command = None, args =  None, argStr = None):
 
 net.Receive("clear", ClearScreen)
 concommand.Add("clear", ClearScreen)
+
+
+def UpdateGameState(netPacket):
+    global gameState
+    gameState = netPacket.ReadGameState()
+
+
+net.Receive("update_gamestate", UpdateGameState)
+
 
 #
 #

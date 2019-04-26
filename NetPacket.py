@@ -23,6 +23,8 @@ import json
 from queue import *
 
 from Vector2 import Vector2
+from GameState import GameState
+from NetType import NetType
 
 class NetPacket:
 
@@ -43,6 +45,15 @@ class NetPacket:
 	def ReadPassword(self):
 		pass  # Encrypt 2x? One for main networking, again for pass
 
+	def ReadGameState(self):
+		data = self.Release()
+		tag = self.DataTag(data)
+		if tag != GameState.tag:
+			print("Expected tag: " + GameState.tag + ". Got: " + tag)
+			return None
+		else:
+			return GameState.FromString(self.StripTag(data))
+
 	def Release(self):
 		if not self.IsEmpty():
 			return self.data.get() # return and remove first element
@@ -52,10 +63,36 @@ class NetPacket:
 		return self.data.qsize() < 1
 
 	def WriteVector(self, vec2):
-		self.Append("vec2 " + str(vec2))
+		self.Append(Vector2.tag + " " + str(vec2))
 
 	def WritePassword(self, passwd):
 		pass
+
+	def WriteGameState(self, gameState):
+		self.Append(GameState.tag + " " + gameState.value)
+
+	def Write(self, type, data):
+		if issubclass(type, NetType):
+			self.Append(type.ToNetString(data))
+		else:
+			raise Exception("Tried to write an object not based off of NetType: " + str(type))
+
+	def Read(self, type):
+		raw = self.Release()
+
+		#print(raw)
+
+		if raw is not None and issubclass(type, NetType):
+			try:
+				data = type.FromNetString(raw)
+			except Exception as error:
+				#print(error)
+				print("NetPacket - invalid read type: " + str(type.__class__))
+			else:
+				return data
+		else:
+			print("Tried to read an object with no data or not of NetType: " + raw)
+
 
 	def Append(self, data):
 		self.data.put(data)
@@ -101,15 +138,4 @@ class NetPacket:
 		li = list(self.data.queue)
 		output = str(self.tag) + "\n" + str(li)[1:-1]
 		return output
-
-	# Return the first word(tag) in a string
-	def DataTag(self, string):
-		return string.split(' ')[0].strip()
-
-	# Return all but the first word(tag) in a string
-	def StripTag(self, string):
-		separatedStrings = string.split(' ')
-		separatedStrings.pop(0)
-		return ' '.join(separatedStrings)
-
 

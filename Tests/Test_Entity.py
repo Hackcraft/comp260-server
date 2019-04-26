@@ -27,4 +27,4 @@ test_ent1.pos = Vector2(6, 6)
 # Entities can be printed
 assert str(test_ent1) == "TestTag" + ": " + str(666) + " at " + str(Vector2(6, 6))
 
-print("Test_Entity.py - pass")
+print(__file__ + " - pass")

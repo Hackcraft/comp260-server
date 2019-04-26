@@ -27,5 +27,7 @@ assert len(netBase1.receivers) == 2
 assert netBase1.receivers["netBase2"] == print
 assert netBase2.receivers["netBase1"] == print
 
-print("Test_NetBase.py - pass")
+
+
+print(__file__ + " - pass")
 

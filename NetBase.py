@@ -10,13 +10,14 @@ from NetPacket import NetPacket
 
 class NetBase:
     PACKET_ID = "HMUD"
+    MAX_PROCESSING_AT_ONCE = 100
 
     # References to all instances created
     instancesLock = threading.Lock()
     netInstances = [] # All instances of NetBase and derivatives
 
-    # Incomming
-    incommingQueue = Queue()
+    # Multithreading queues (player, netPacket)
+    inputQueue = Queue()
 
     # Receivers
     receiversLock = threading.Lock()
@@ -45,14 +46,17 @@ class NetBase:
         self.netPacket = NetPacket()
         self.netPacket.SetTag(tag)
 
-    def Write(self, string):
-        self.netPacket.Append(string)
+    def Write(self, type, data):
+        self.netPacket.Write(type, data)
 
     def WriteVector(self, vec2):
         self.netPacket.WriteVector(self, vec2)
 
     def WritePassword(self, passwd):
         self.netPacket.WritePassword(self, passwd)
+
+    def WriteGameState(self, gameState):
+        self.netPacket.WriteGameState(gameState)
 
     def Send(self, targetSocket):
         try:
@@ -91,6 +95,21 @@ class NetBase:
                 else:
                     print("Condition not met for: " + netPacket.GetTag())
         self.receiversLock.release()
+
+    def Update(self):
+        self.ProcessInput()
+
+    def ProcessInput(self):
+        count = 0
+
+        while(self.inputQueue.qsize() > 0 and count < self.MAX_PROCESSING_AT_ONCE):
+            input = self.inputQueue.get()
+            player = input[0]
+            netPakcet = input[1]
+
+            self.RunReceiver(netPakcet, player)
+
+            count += 1
 
 
 

@@ -36,6 +36,6 @@ Language.ChangeLanguage("fake")
 assert Language.WordToValue("direction", "Not North") == Vector2(0, 1)
 assert Language.ValueToWord("direction", Vector2(0, 1)) == "Not North"
 
-print("Test_Language.py - pass")
+print(__file__ + " - pass")
 
 

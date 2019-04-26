@@ -18,3 +18,5 @@ def CommitCallback(success):
 
 db.Commit("INSERT INTO test_tab(id) VALUES(%s)", (1010,), CommitCallback)
 
+print(__file__ + " - pass")
+

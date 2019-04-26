@@ -1,4 +1,6 @@
-class Vector2:
+from NetType import NetType
+
+class Vector2(NetType):
     tag = "vec2"
 
     def __init__(self, x, y):
@@ -45,9 +47,23 @@ class Vector2:
         elif isinstance(other_vector2, int):
             return Vector2(self.x * other_vector2, self.y * other_vector2)
 
-    def FromString(self, string):
-        split = string.split(' ')
-        if len(split) < 2:
+    @classmethod
+    def ToNetString(cls, vec2):
+        return Vector2.tag + " " + str(vec2)
+
+    @classmethod
+    def FromNetString(cls, string):
+        # Extract the tag
+        tag = cls.DataTag(string)
+        # Validate the tag
+        if tag != Vector2.tag:
+            print("Expected tag: " + Vector2.tag + ". Got: " + tag)
+            return None
+        # Remove the tag
+        data = cls.StripTag(string)
+        # Create a vector from the data
+        split = data.split(' ')
+        if len(split) <= 2:
             x = split[0].strip()
             y = split[1].strip()
             if int(x) != x or int(y) != y:

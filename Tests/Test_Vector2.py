@@ -28,4 +28,10 @@ assert (test_vec1 != test_vec2) == True
 # Vectors can be printed
 assert str(test_vec1) == "1 1"
 
-print("Test_Vector2.py - pass")
+# NetType conversion check
+originalVec2 = Vector2(100, 100)
+netString = Vector2.ToNetString(originalVec2)
+newVec2 = Vector2.FromNetString(netString)
+assert(originalVec2 == newVec2)
+
+print(__file__ + " - pass")

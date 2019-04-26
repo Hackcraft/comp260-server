@@ -13,4 +13,4 @@ assert test_player != None
 # Their tag is player
 assert test_player.tag == "player"
 
-print("Test_Player.py - pass")
+print(__file__ + " - pass")

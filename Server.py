@@ -46,9 +46,13 @@ def handleClientLost(player):
 hook.Add("PlayerLost", "LostMessages", handleClientLost)
 
 def handleClientJoined(player):
+    # Update their local game state (defaults to Login in Player)
+    net.Start("gamestate")
+    net.Write(GameState, GameState.LOGIN)
+    net.Send(player)
 
     # Send login screen
-    login.RequestLogin(player)
+    #login.RequestLogin(player)
 
     '''
     # Log the player connection
@@ -119,7 +123,7 @@ def HandleSay(netPacket, player):
     hook.Run("PlayerSay", (player, message))
 
 
-net.Receive("say", HandleSay)
+net.Receive("say", HandleSay, lambda player: player.gameState == GameState.PLAY)
 
 # Help
 def HandleHelp(netPacket, player):
@@ -127,7 +131,7 @@ def HandleHelp(netPacket, player):
     net.Write("This is help")
     net.Send(player)
 
-net.Receive("help", HandleHelp, lambda player : player.gameState == GameState.PLAY)
+net.Receive("help", HandleHelp, lambda player: player.gameState == GameState.PLAY)
 
 # Go
 def HandleGO(netPacket, player):
@@ -157,7 +161,7 @@ def HandleGO(netPacket, player):
 
     print("Finished GO")
 
-net.Receive("go", HandleGO, lambda player : player.gameState == GameState.PLAY)
+net.Receive("go", HandleGO, lambda player: player.gameState == GameState.PLAY)
 
 
 def SendRoomInformation(player, room):
@@ -192,7 +196,7 @@ def PlayerJoinedRoom(turp):
     for key in net.players:
         if net.players[key].pos == roomPos and net.players[key] != player:
             net.Start("Chat")
-            net.Write(player.name + " has joined the room!")
+            net.Write(player.nick + " has joined the room!")
             net.Send(net.players[key])
 
     net.playersLock.release()
@@ -220,7 +224,7 @@ def PlayerLeftRoom(turp):
     for key in net.players:
         if net.players[key].pos == roomPos and net.players[key] != player:
             net.Start("Chat")
-            net.Write(player.name + " has left the room!")
+            net.Write(player.nick + " has left the room!")
             net.Send(net.players[key])
 
     net.playersLock.release()
@@ -237,7 +241,7 @@ def ShowPlayers(netPakcet, player):
     net.playersLock.acquire()
     for key in net.players:
         if net.players[key].pos == player.pos and net.players[key] != player:
-            playersStr += net.players[key].name + ", "
+            playersStr += net.players[key].nick + ", "
             playerCount += 1
     net.playersLock.release()
 
@@ -252,14 +256,16 @@ def ShowPlayers(netPakcet, player):
     net.Send(player)
 
 
-net.Receive("search", ShowPlayers, lambda player : player.gameState == GameState.PLAY)
+net.Receive("search", ShowPlayers, lambda player: player.gameState == GameState.PLAY)
 
 while True:
-    _input = input()
-    if _input == "stop":
+    net.Update()
+
+    #_input = input()
+    #if _input == "stop":
         # Save data
         # Close connections (server closing)
-        print("Stopping server")
-        net.Stop()
-        sys.exit()
-    print(_input)
+    #    print("Stopping server")
+    #    net.Stop()
+    #    sys.exit()
+    #print(_input)
