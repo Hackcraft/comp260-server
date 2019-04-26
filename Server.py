@@ -1,8 +1,8 @@
 import sys
 import socket
 import threading
-
-from queue import *
+import time
+from queue import Queue
 
 from NetServer import NetServer
 from Hook import Hook
@@ -15,14 +15,21 @@ from Login import Login
 
 net = None
 
+def GetPublicIP():
+    u = miniupnpc.UPnP()
+    u.discoverdelay = 200
+    u.discover()
+    u.selectigd()
+    return u.lanaddr
+
 # Allow for custom ip and port to be defined on startup
 if __name__ == "__main__":
     argCount = len(sys.argv)
-    ip = argCount > 1 and sys.argv[1] or NetServer.defaultIP
-    port = int(argCount > 2 and sys.argv[2] or NetServer.defaultPort)
+    ip = argCount > 1 and sys.argv[1] or None
+    port = argCount > 2 and sys.argv[2] and int(sys.argv[2]) or None
     net = NetServer(ip, port)
-else:
-    net = NetServer()
+
+print("2")
 
 hook = Hook()
 dungeon = Dungeon()
@@ -258,14 +265,38 @@ def ShowPlayers(netPakcet, player):
 
 net.Receive("search", ShowPlayers, lambda player: player.gameState == GameState.PLAY)
 
-while True:
-    net.Update()
 
-    #_input = input()
-    #if _input == "stop":
-        # Save data
-        # Close connections (server closing)
-    #    print("Stopping server")
-    #    net.Stop()
-    #    sys.exit()
-    #print(_input)
+def StopServer():
+    print("Stopping the server")
+    net.Stop()
+    sys.exit()
+
+# Terminal threaded input (so it can other stuff whilst waiting for input)
+# Credits: https://stackoverflow.com/a/19655992 (although modified a fair bit now)
+
+def addInput(inputQueue):
+    while True:
+        inp = input()
+        inputQueue.put(inp)
+
+def program():
+    inputQueue = Queue()
+
+    inputThread = threading.Thread(target=addInput, args=(inputQueue,))
+    inputThread.daemon = True
+    inputThread.start()
+
+    while True:
+        try:
+            net.Update()
+
+            if inputQueue.qsize() > 0:
+                commandStr = inputQueue.get()
+                if commandStr == "stop":
+                    StopServer()
+                    inputThread.join()
+        except KeyboardInterrupt:
+            StopServer()
+            inputThread.join()
+
+program()

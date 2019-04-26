@@ -4,6 +4,7 @@
 import socket
 import threading
 import warnings
+import miniupnpc
 
 from NetBase import NetBase
 from NetPacket import NetPacket
@@ -11,6 +12,21 @@ from Hook import Hook
 from Player import Player
 
 hook = Hook()
+
+# https://stackoverflow.com/a/41385033
+def GetPublicIP():
+    u = miniupnpc.UPnP()
+    u.discoverdelay = 200
+    u.discover()
+    u.selectigd()
+    return u.externalipaddress()
+
+def GetLocalIP():
+    u = miniupnpc.UPnP()
+    u.discoverdelay = 200
+    u.discover()
+    u.selectigd()
+    return u.lanaddr
 
 class NetServer(NetBase):
 
@@ -23,17 +39,58 @@ class NetServer(NetBase):
     defaultIP = "127.0.0.1"
     defaultPort = 8222
 
-    def __init__(self, ip = "127.0.0.1", port = 8222):
+    ip = defaultIP
+    port = defaultPort
+    shouldStopServer = False
+
+    def __init__(self, ip = None, port = None):
         if self.serverSocket == None:
             self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-            # Socket availability check
-            try:
-                self.serverSocket.bind((ip, port))
-            except socket.error as error:
-                print("Can't start server, is another instance running?")
-                print(str(error))
-                exit()
+            if ip is None:
+                # If we cannot connect to the public ip
+                try:
+                    self.ip = GetPublicIP()
+                    self.port = self.defaultPort
+
+                    self.serverSocket.bind((self.ip, self.port))
+                except socket.error as error:
+                    print("Cannot bind to public ip. Trying local ip...")
+
+                    try:
+                        self.ip = GetLocalIP()
+                        self.port = self.defaultPort
+
+                        self.serverSocket.bind((self.ip, self.port))
+                    except socket.error as error:
+                        print("Unable to bind to local up. Trying 127.0.0.1")
+
+                        try:
+                            self.ip = "127.0.0.1"
+                            self.port = self.defaultPort
+
+                            self.serverSocket.bind((self.ip, self.port))
+                        except socket.error as error:
+                            print("Something is really wrong. Cannot bind to any ip. Are there multiple instances?")
+
+
+
+                # Connect to the local ip
+            else:
+
+                # Socket availability check
+                try:
+                    if port is None:
+                        self.port = self.defaultPort
+                    self.serverSocket.bind((self.ip, self.port))
+                except socket.error as error:
+                    print("Can't start server, is another instance running?")
+                    print(str(error))
+                    exit()
+
+            print("Server bound to: " + self.ip + ":" + str(self.port))
+            print("If you are running the server locally so are unable to connect. Launch the server with the loopback "
+                  "ip as the first parameter (python3 Server.py 127.0.0.1)")
 
             self.serverSocket.listen(5)
 
@@ -46,7 +103,7 @@ class NetServer(NetBase):
         clientValid = True
         netPacket = NetPacket()
 
-        while clientValid == True:
+        while clientValid is True and not self.shouldStopServer:
             try:
                 # Read the incoming data
                 packetID = clientSocket.recv(4)
@@ -97,28 +154,31 @@ class NetServer(NetBase):
     def AcceptClients(self, serverSocket):
         print("acceptThread running")
         while(self.shouldFindClients):
-            (clientSocket, address) = serverSocket.accept()
+            try:
+                (clientSocket, address) = serverSocket.accept()
+            except socket.error as error:
+                pass
+            else:
+                # Add the client and set their name
+                self.playersLock.acquire()
+                self.playersSinceStart += 1
 
-            # Add the client and set their name
-            self.playersLock.acquire()
-            self.playersSinceStart += 1
+                player = Player(clientSocket, "Client " + str(self.playersSinceStart))
+                player.socket = clientSocket
+                player.isConnected = True
+                player.id = self.playersSinceStart
 
-            player = Player(clientSocket, "Client " + str(self.playersSinceStart))
-            player.socket = clientSocket
-            player.isConnected = True
-            player.id = self.playersSinceStart
+                self.players[clientSocket] = player
+                self.playersLock.release()
 
-            self.players[clientSocket] = player
-            self.playersLock.release()
+                # Start listening for the client
+                thread = threading.Thread(target=self.ClientReceive, args=(clientSocket,))
+                thread.daemon = True
+                thread.start()
+                player.thread = thread
 
-            # Start listening for the client
-            thread = threading.Thread(target=self.ClientReceive, args=(clientSocket,))
-            thread.daemon = True
-            thread.start()
-            player.thread = thread
-
-            # Tell stuff they joined
-            hook.Run("PlayerJoined", player)
+                # Tell stuff they joined
+                hook.Run("PlayerJoined", player)
 
     def Send(self, targetSocket):
         try:
@@ -149,10 +209,16 @@ class NetServer(NetBase):
 
     def Stop(self):
         self.shouldFindClients = False
+        self.shouldStopServer = True
+
         self.serverSocket.shutdown(socket.SHUT_RD)  # Shutdown, stopping any further receives
         self.serverSocket.close()
 
-        self.acceptThread.shutdown()
+        self.acceptThread.join()
+
+        for player in self.players:
+            player.thread.join()
+
 
     def __del__(self):
         self.Stop()
