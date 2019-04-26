@@ -10,6 +10,8 @@ from Language import Language
 from Dungeon import Dungeon
 from Player import Player
 from Vector2 import Vector2
+from GameState import GameState
+from Login import Login
 
 net = None
 
@@ -24,6 +26,7 @@ else:
 
 hook = Hook()
 dungeon = Dungeon()
+login = Login(net, hook)
 
 def handleClientLost(player):
     # Log the player disconnect
@@ -43,6 +46,11 @@ def handleClientLost(player):
 hook.Add("PlayerLost", "LostMessages", handleClientLost)
 
 def handleClientJoined(player):
+
+    # Send login screen
+    login.RequestLogin(player)
+
+    '''
     # Log the player connection
     print("Client joined: " + player.name)
 
@@ -73,8 +81,8 @@ def handleClientJoined(player):
     net.playersLock.release()
 
     # Room information
-    print("infos")
     SendRoomInformation(player, dungeon.PositionToRoom(player.pos))
+    '''
 
 
 hook.Add("PlayerJoined", "WelcomeMessages", handleClientJoined)
@@ -84,8 +92,11 @@ def main():
     #net
 
 # Say
-def HandleSay(netPacket, player):
-    message = netPacket.Release()
+def SendLocalChat(turp):
+    player, message = turp
+    # Only works in play mode
+    if player.gameState != GameState.PLAY:
+        return
 
     # Other players
     net.playersLock.acquire()
@@ -99,6 +110,15 @@ def HandleSay(netPacket, player):
             net.Write(player.name + ": " + message)
             net.Send(players[key])
 
+
+hook.Add("PlayerSay", "LocalChat", SendLocalChat)
+
+
+def HandleSay(netPacket, player):
+    message = netPacket.Release()
+    hook.Run("PlayerSay", (player, message))
+
+
 net.Receive("say", HandleSay)
 
 # Help
@@ -107,7 +127,7 @@ def HandleHelp(netPacket, player):
     net.Write("This is help")
     net.Send(player)
 
-net.Receive("help", HandleHelp)
+net.Receive("help", HandleHelp, lambda player : player.gameState == GameState.PLAY)
 
 # Go
 def HandleGO(netPacket, player):
@@ -137,7 +157,7 @@ def HandleGO(netPacket, player):
 
     print("Finished GO")
 
-net.Receive("go", HandleGO)
+net.Receive("go", HandleGO, lambda player : player.gameState == GameState.PLAY)
 
 
 def SendRoomInformation(player, room):
@@ -232,7 +252,7 @@ def ShowPlayers(netPakcet, player):
     net.Send(player)
 
 
-net.Receive("search", ShowPlayers)
+net.Receive("search", ShowPlayers, lambda player : player.gameState == GameState.PLAY)
 
 while True:
     _input = input()

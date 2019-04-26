@@ -1,4 +1,6 @@
 from Entity import Entity
+from GameState import GameState
+
 
 class Player(Entity):
 
@@ -8,6 +10,8 @@ class Player(Entity):
         self.socket = socket
         self.name = clientName
         self.isConnected = False
+        self.gameState = GameState.LOGIN
+        self.isAdmin = False
 
     def __eq__(self, otherPlayer):
         if not isinstance(otherPlayer, Player):

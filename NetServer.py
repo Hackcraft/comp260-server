@@ -13,6 +13,7 @@ hook = Hook()
 
 class NetServer(NetBase):
 
+    shouldFindClients = True
     serverSocket = None
     players = {}
     playersSinceStart = 0
@@ -67,8 +68,10 @@ class NetServer(NetBase):
                     except:
                         pass
                     else:
+                        player = self.players[clientSocket]
+
                         # Pass to the right Receive function
-                        self.RunReceiver(netPacket, clientSocket)
+                        self.RunReceiver(netPacket, player)
             except socket.error:
                 print("ClientReceive - lost client");
                 clientValid = False
@@ -79,7 +82,7 @@ class NetServer(NetBase):
                 self.playersLock.release()
 
                 # Stop their thread
-                player.thread.shutdown()
+#                player.thread.exit()
 
                 # Let stuff know they left
                 hook.Run("PlayerLost", player)
@@ -91,7 +94,7 @@ class NetServer(NetBase):
 
     def AcceptClients(self, serverSocket):
         print("acceptThread running")
-        while(True):
+        while(self.shouldFindClients):
             (clientSocket, address) = serverSocket.accept()
 
             # Add the client and set their name
@@ -123,14 +126,15 @@ class NetServer(NetBase):
         except socket.error:
             print("Failed to send data to client!")
 
-    def RunReceiver(self, netPacket, clientSocket):
+    def RunReceiver(self, netPacket, player):
         self.playersLock.acquire()
-        player = self.players[clientSocket]
+        player = self.players[player.socket]
         self.playersLock.release()
 
         super().RunReceiver(netPacket, player)
 
     def Stop(self):
+        self.shouldFindClients = False
         self.serverSocket.shutdown(self.serverSocket.SHUT_RD)  # Shutdown, stopping any further receives
         self.serverSocket.close()
 

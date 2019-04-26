@@ -1,4 +1,5 @@
 class Vector2:
+    tag = "vec2"
 
     def __init__(self, x, y):
         self.x = int(x)
@@ -43,3 +44,21 @@ class Vector2:
             return Vector2(self.x * other_vector2.x, self.y * other_vector2.y)
         elif isinstance(other_vector2, int):
             return Vector2(self.x * other_vector2, self.y * other_vector2)
+
+    def FromString(self, string):
+        split = string.split(' ')
+        if len(split) < 2:
+            x = split[0].strip()
+            y = split[1].strip()
+            if int(x) != x or int(y) != y:
+                return Vector2(x, y)
+            else:
+                print("Expected two numbers to create Vector2, x or y is not a number.")
+                return None
+        else:
+            print("Expected two numbers to create Vector2, x and y.")
+            return None
+
+    @staticmethod
+    def IsValid(vec2):
+        return vec2 is not None and isinstance(vec2, Vector2)

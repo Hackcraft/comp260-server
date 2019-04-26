@@ -33,8 +33,17 @@ messageQueue = Queue() # messages to put in UI
 #
 #
 
+class UIData:
+    def __init__(self):
+        self.shouldClearScreen = False
+
+uiData = UIData()
+UILock = threading.Lock()
+
 class Example(QWidget):
     global messageQueue
+    global UILock
+    global shouldClearScreen
 
     def __init__(self):
         super().__init__()
@@ -58,6 +67,11 @@ class Example(QWidget):
             self.setWindowTitle('Multi user Dungeon | Connected to: ' + str(net.ip) + ":" + str(net.port))
         else:
             self.setWindowTitle('Multi user Dungeon | Not connected to server')
+        if uiData.shouldClearScreen:
+            UILock.acquire()
+            self.chatOutput.clear()
+            uiData.shouldClearScreen = False
+            UILock.release()
 
     def userInputOnUserPressedReturn(self):
         entry = self.userInput.text()
@@ -97,7 +111,7 @@ class Example(QWidget):
 
 def ConnectedToServer(args):
     print("Connected to " + args[0] + ":" + str(args[1]))
-    messageQueue.put("Connected to " + args[0] + ":" + str(args[1]))
+    #messageQueue.put("Connected to " + args[0] + ":" + str(args[1]))
 
 
 hook.Add("ConnectedToServer", "UI Updater", ConnectedToServer)
@@ -151,6 +165,16 @@ def EnteredRoom(netPacket):
 
 
 net.Receive("EnteredRoom", EnteredRoom)
+
+
+def ClearScreen(player = None, command = None, args =  None, argStr = None):
+    UILock.acquire()
+    uiData.shouldClearScreen = True
+    UILock.release()
+
+
+net.Receive("clear", ClearScreen)
+concommand.Add("clear", ClearScreen)
 
 #
 #

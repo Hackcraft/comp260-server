@@ -7,7 +7,6 @@ import threading
 
 from queue import *
 from NetPacket import NetPacket
-from Hook import Hook
 
 class NetBase:
     PACKET_ID = "HMUD"
@@ -49,6 +48,12 @@ class NetBase:
     def Write(self, string):
         self.netPacket.Append(string)
 
+    def WriteVector(self, vec2):
+        self.netPacket.WriteVector(self, vec2)
+
+    def WritePassword(self, passwd):
+        self.netPacket.WritePassword(self, passwd)
+
     def Send(self, targetSocket):
         try:
             targetSocket.send(self.PACKET_ID.encode())
@@ -65,21 +70,26 @@ class NetBase:
         except socket.error:
             print("Failed to send data!")
 
-    def Receive(self, tag, func):
+    def Receive(self, tag, func, condition = None):
         # Add to the list of receivers
         self.receiversLock.acquire()
-        self.receivers[tag] = func # args(NetPacket, ClientSocket or None)
+        self.receivers[tag] = (func, condition)
         self.receiversLock.release()
 
     def RunReceiver(self, netPacket, clientSocket):
         self.receiversLock.acquire()
         if netPacket.GetTag() in self.receivers:
+            func, condition = self.receivers[netPacket.GetTag()]
             print("Running: " + netPacket.GetTag())
             # If running on the client - not socket will be passed
             if clientSocket is None:
-                self.receivers[netPacket.GetTag()](netPacket)
+                func(netPacket)
             else:
-                self.receivers[netPacket.GetTag()](netPacket, clientSocket)
+                # If no condition or condition is met
+                if condition is None or condition(clientSocket):
+                    func(netPacket, clientSocket)
+                else:
+                    print("Condition not met for: " + netPacket.GetTag())
         self.receiversLock.release()
 
 
