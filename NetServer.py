@@ -47,6 +47,8 @@ class NetServer(NetBase):
         if self.serverSocket == None:
             self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+            hasConnection = False
+
             if ip is None:
                 # If we cannot connect to the public ip
                 try:
@@ -54,6 +56,7 @@ class NetServer(NetBase):
                     self.port = self.defaultPort
 
                     self.serverSocket.bind((self.ip, self.port))
+                    hasConnection = True
                 except socket.error as error:
                     print("Cannot bind to public ip. Trying local ip...")
 
@@ -62,6 +65,7 @@ class NetServer(NetBase):
                         self.port = self.defaultPort
 
                         self.serverSocket.bind((self.ip, self.port))
+                        hasConnection = True
                     except socket.error as error:
                         print("Unable to bind to local up. Trying 127.0.0.1")
 
@@ -70,6 +74,7 @@ class NetServer(NetBase):
                             self.port = self.defaultPort
 
                             self.serverSocket.bind((self.ip, self.port))
+                            hasConnection = True
                         except socket.error as error:
                             print("Something is really wrong. Cannot bind to any ip. Are there multiple instances?")
 
@@ -83,14 +88,17 @@ class NetServer(NetBase):
                     if port is None:
                         self.port = self.defaultPort
                     self.serverSocket.bind((self.ip, self.port))
+                    hasConnection = True
                 except socket.error as error:
                     print("Can't start server, is another instance running?")
                     print(str(error))
                     exit()
 
-            print("Server bound to: " + self.ip + ":" + str(self.port))
-            print("If you are running the server locally so are unable to connect. Launch the server with the loopback "
-                  "ip as the first parameter (python3 Server.py 127.0.0.1)")
+            if hasConnection:
+                print("Server bound to: " + self.ip + ":" + str(self.port))
+                print("If you are running the server locally so are unable to connect. Launch the server with the loopback "
+                      "ip as the first parameter (python3 Server.py 127.0.0.1)")
+                self.hasConnection = True
 
             self.serverSocket.listen(5)
 

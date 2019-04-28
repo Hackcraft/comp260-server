@@ -121,7 +121,7 @@ hook.Add("ConnectedToServer", "UI Updater", ConnectedToServer)
 
 #
 #
-#       net.Receive
+#       net.Receive -- GameState PLAY
 #
 #
 
@@ -179,6 +179,24 @@ def ClearScreen(player = None, command = None, args =  None, argStr = None):
 net.Receive("clear", ClearScreen)
 concommand.Add("clear", ClearScreen)
 
+#
+#
+#       net.Receive -- GameState LOGIN
+#
+#
+
+def RequestUsername():
+    pass
+
+#net.Receive()
+
+
+#
+#
+#       net.Receive -- GameState update
+#
+#
+
 
 def UpdateGameState(netPacket):
     global gameState
@@ -233,24 +251,6 @@ def Move(player, command, args, argStr):
 
 
 concommand.Add("go", Move)
-
-
-def Help(player, command, args, argStr):
-    commands = ", ".join(concommand.commands)
-    messageQueue.put("The commands are: " + commands)
-
-
-concommand.Add("help", Help)
-
-
-def SendNetCommand(player, command, args, argStr):
-    net.Start(command)
-    net.Write(argStr)
-    net.Send()
-
-
-concommand.Add("say", SendNetCommand)
-concommand.Add("search", SendNetCommand)
 
 #
 #

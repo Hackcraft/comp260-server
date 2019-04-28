@@ -8,6 +8,7 @@ import socket
 from NetBase import NetBase
 from NetPacket import NetPacket
 from Hook import Hook
+from Player import Player
 
 hook = Hook()
 
@@ -26,6 +27,7 @@ class NetClient(NetBase):
     clientDataLock = threading.Lock()
     ip = None
     port = None
+    localPlayer = True
 
     def __init__(self, ip = "127.0.0.1", port = 8222):
         super().__init__()
@@ -64,6 +66,7 @@ class NetClient(NetBase):
                         self.RunReceiver(netPacket, None)
             except socket.error:
                 print("Server lost")
+                self.hasConnection = False
                 hook.Run("DisconnectedFromServer", (self.ip, self.port))
                 clientData.connectedToServer = False
                 clientData.serverSocket = None
@@ -79,6 +82,10 @@ class NetClient(NetBase):
 
                 if clientData.serverSocket is not None:
                     clientData.serverSocket.connect((self.ip, self.port))
+
+                # Connected to server - create localPlayer
+                self.localPlayer = Player(clientData.serverSocket, self)
+                self.hasConnection = True
 
                 clientData.connectedToServer = True
                 clientData.receiveThread = threading.Thread(target=self.ServerReceive, args=(self.clientData,))

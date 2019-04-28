@@ -1,6 +1,5 @@
 from NetType import NetType
 
-
 class GameState(NetType):
     tag = "gs"
 

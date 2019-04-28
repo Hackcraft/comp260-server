@@ -15,21 +15,12 @@ from Login import Login
 
 net = None
 
-def GetPublicIP():
-    u = miniupnpc.UPnP()
-    u.discoverdelay = 200
-    u.discover()
-    u.selectigd()
-    return u.lanaddr
-
 # Allow for custom ip and port to be defined on startup
 if __name__ == "__main__":
     argCount = len(sys.argv)
     ip = argCount > 1 and sys.argv[1] or None
     port = argCount > 2 and sys.argv[2] and int(sys.argv[2]) or None
     net = NetServer(ip, port)
-
-print("2")
 
 hook = Hook()
 dungeon = Dungeon()

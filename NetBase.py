@@ -12,6 +12,9 @@ class NetBase:
     PACKET_ID = "HMUD"
     MAX_PROCESSING_AT_ONCE = 100
 
+    # Reference to whether the net is the client (NetClient)
+    localPlayer = False
+
     # References to all instances created
     instancesLock = threading.Lock()
     netInstances = [] # All instances of NetBase and derivatives
@@ -22,6 +25,8 @@ class NetBase:
     # Receivers
     receiversLock = threading.Lock()
     receivers = {} # tag : func
+
+    hasConnection = False
 
     def __init__(self):
         self.netPacket = NetPacket()
@@ -78,6 +83,12 @@ class NetBase:
         # Add to the list of receivers
         self.receiversLock.acquire()
         self.receivers[tag] = (func, condition)
+        self.receiversLock.release()
+
+    def RemoveReceive(self, tag):
+        self.receiversLock.acquire()
+        if tag in self.receivers:
+            del self.receivers[tag]
         self.receiversLock.release()
 
     def RunReceiver(self, netPacket, clientSocket):

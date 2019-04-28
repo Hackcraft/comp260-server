@@ -22,15 +22,25 @@ class Player(Entity):
         return self.socket == otherPlayer.socket
 
     def SetGameState(self, gameState):
-#        if GameState.
-        pass
-
-        self.gameState = gameState
-
-        if not self.isLocalPlayer:
+        if self.isLocalPlayer:
+            self.gameState = gameState
+        else:
             self.net.Start("gamestate")
             self.net.WriteGameState(gameState)
+            self.net.Send()
+#
+#    def SetNet(self, net, isServerside):
+#        self.isLocalPlayer = not isServerside
+#        self.net = net
 
-    def SetNet(self, net, isServerside):
-        self.isLocalPlayer = not isServerside
-        self.net = net
+    def IsLocalPlayer(self):
+        if self.net is not None:
+            if self.net.localPlayer is not False:
+                return True
+        return False
+
+    def IsValid(self):
+        if self.net is not None:
+            if self.net.self.hasConnection and self.socket is not None:
+                return True
+        return False

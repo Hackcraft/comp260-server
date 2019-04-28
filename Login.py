@@ -32,7 +32,8 @@ class Login:
 
     def RequestLogin(self, player):
         self.net.Start("gamestate")
-        self.net.WriteGame
+        self.net.WriteGameState(GameState.LOGIN)
+        self.net.Send(player)
 
         print("Login")
 
