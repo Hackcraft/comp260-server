@@ -28,6 +28,8 @@ from NetType import NetType
 
 class NetPacket:
 
+	invalidPacketTag = "None"
+
 	def __init__(self):
 		self.data = Queue()
 		self.tag = None
@@ -125,13 +127,19 @@ class NetPacket:
 
 	def Decode(self, data):
 		# returns (tag, dataQueue)
-		decode = data.decode("utf-8")
-		arr = json.loads(decode)
-		tag = arr[0]
-		queue = Queue()
-		for i in range(1, len(arr)):
-			queue.put(arr[i])
-		return (tag, queue)
+		try:
+			decode = data.decode("utf-8")
+			arr = json.loads(decode)
+			tag = arr[0]
+			queue = Queue()
+			for i in range(1, len(arr)):
+				queue.put(arr[i])
+		except:
+			return self.invalidPacketTag, Queue()
+		else:
+			return tag, queue
+
+
 
 	def __str__(self):
 		# Queue -> List -> tag + List

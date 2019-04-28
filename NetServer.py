@@ -43,68 +43,106 @@ class NetServer(NetBase):
     port = defaultPort
     shouldStopServer = False
 
+    iHavePortForwarded = False
+
     def __init__(self, ip = None, port = None):
         if self.serverSocket == None:
             self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
             hasConnection = False
 
+            # If no ip has been provided - workout which to use
             if ip is None:
-                # If we cannot connect to the public ip
-                try:
-                    self.ip = GetPublicIP()
-                    self.port = self.defaultPort
 
-                    self.serverSocket.bind((self.ip, self.port))
-                    hasConnection = True
-                except socket.error as error:
-                    print("Cannot bind to public ip. Trying local ip...")
+                # Try public ip
+                publicSuccess = self.TryPublicSocket()
 
-                    try:
-                        self.ip = GetLocalIP()
-                        self.port = self.defaultPort
+                if not publicSuccess:
 
-                        self.serverSocket.bind((self.ip, self.port))
-                        hasConnection = True
-                    except socket.error as error:
-                        print("Unable to bind to local up. Trying 127.0.0.1")
+                    # If our ports are likely open
+                    if  self.iHavePortForwarded:
 
-                        try:
-                            self.ip = "127.0.0.1"
-                            self.port = self.defaultPort
+                        # Try forwarded ip (192.x.x.x)
+                        print("Cannot bind to public ip. Trying forwarded ip...")
 
-                            self.serverSocket.bind((self.ip, self.port))
-                            hasConnection = True
-                        except socket.error as error:
+                        forwardedSuccess = self.TryForwardedSocket()
+
+                        if not forwardedSuccess:
+
+                            # Try local ip (127.0.0.1)
+                            print("Unable to bind to forwarded. Trying 127.0.0.1")
+
+                            localSuccess = self.TryLocalSocket()
+
+                            if not localSuccess:
+                                print("Something is really wrong. Cannot bind to any ip. Are there multiple instances?")
+
+
+                    # Cannot use public ip or forwarded ip (no port forwarding)
+                    else:
+                        print("Unable to bind to public. Trying 127.0.0.1")
+                        localSuccess = self.TryLocalSocket()
+
+                        if not localSuccess:
                             print("Something is really wrong. Cannot bind to any ip. Are there multiple instances?")
 
-
-
-                # Connect to the local ip
+            # If an if has been provided - try and use it
             else:
-
                 # Socket availability check
                 try:
                     if port is None:
                         self.port = self.defaultPort
                     self.serverSocket.bind((self.ip, self.port))
-                    hasConnection = True
+                    self.hasConnection = True
                 except socket.error as error:
                     print("Can't start server, is another instance running?")
                     print(str(error))
                     exit()
 
-            if hasConnection:
+            if self.hasConnection:
                 print("Server bound to: " + self.ip + ":" + str(self.port))
-                print("If you are running the server locally so are unable to connect. Launch the server with the loopback "
+
+            print("If you are running the server locally so are unable to connect. Launch the server with the loopback "
                       "ip as the first parameter (python3 Server.py 127.0.0.1)")
-                self.hasConnection = True
 
             self.serverSocket.listen(5)
 
             # Listen for messages
             self.acceptThread = threading.Thread(target=self.AcceptClients, args=(self.serverSocket, ))
             self.acceptThread.start() # self.acceptThread.shutdown()
+
+    def TryPublicSocket(self):
+        try:
+            self.ip = GetPublicIP()
+            self.port = self.defaultPort
+
+            self.serverSocket.bind((self.ip, self.port))
+            self.hasConnection = True
+            return True
+        except socket.error as error:
+            return False
+
+    def TryForwardedSocket(self):
+        try:
+            self.ip = GetLocalIP()
+            self.port = self.defaultPort
+
+            self.serverSocket.bind((self.ip, self.port))
+            self.hasConnection = True
+            return True
+        except socket.error as error:
+            return False
+
+    def TryLocalSocket(self):
+        try:
+            self.ip = "127.0.0.1"
+            self.port = self.defaultPort
+
+            self.serverSocket.bind((self.ip, self.port))
+            self.hasConnection = True
+            return True
+        except socket.error as error:
+            return False
 
     def ClientReceive(self, clientSocket):
         print("clientReceive running")

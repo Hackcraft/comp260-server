@@ -4,10 +4,12 @@ class GameState(NetType):
     tag = "gs"
 
     # Enum type system (enum import was causing problems)
-    LOGIN = 0
-    PLAY = 1
+    OFFLINE = 0
+    LOGIN = 1
+    PLAY = 2
 
     states = [
+        "OFFLINE",
         "LOGIN",
         "PLAY"
     ]
@@ -19,7 +21,6 @@ class GameState(NetType):
             index = cls.states.index(state)
         except:
             pass
-        print(cls.states.index("LOGIN"))
         return index
 
     @classmethod

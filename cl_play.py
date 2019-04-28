@@ -4,17 +4,25 @@
 
 from cl_base import *
 from Language import Language
+from Player import Player
+from Vector2 import Vector2
+from Room import Room
 
 class Play(Base):
 
     gameState = GameState.PLAY
 
     def __init__(self, *args):
+        self.nets = {  # "tag" = (callback, condition)
+            "EnteredRoom": self.EnteredRoom
+        }
+
         self.commands = {  # "command" = callback
             "say": self.SendNetCommand,
             "search": self.SendNetCommand,
             "help": self.Help,
-            "go": self.Move()
+            "go": self.Move,
+
         }
 
         self.hooks = {  # "eventName" = (identifier, callback)
@@ -62,3 +70,29 @@ class Play(Base):
     #
     # Net methods
     #
+
+    def EnteredRoom(netPacket):
+        global room
+
+        connections = netPacket.Release()
+        description = netPacket.Release()
+
+        directions = connections.split(",")
+        directionVectors = []
+        languageDirs = ""
+        for i in range(0, len(directions)):
+            coords = directions[i].split(" ")
+            if len(coords) == 2:
+                vec2 = Vector2(coords[0], coords[1])
+                directionVectors.append(vec2)
+                languageDirs += Language.ValueToWord("direction", vec2) + ","
+        languageDirs = languageDirs[:-1]
+
+        # Update our local room
+        room = Room(0, directionVectors, description)
+
+        messageQueue.put("Entered new room: \n" +
+                         description + "\n" +
+                         "You can move: \n" +
+                         languageDirs
+                         )

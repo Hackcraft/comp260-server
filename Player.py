@@ -10,10 +10,11 @@ class Player(Entity):
         self.socket = socket
         self.nick = clientName
         self.isConnected = False
-        self.gameState = GameState.LOGIN
+        self.gameState = GameState.OFFLINE
         self.isAdmin = False
         self.isLocalPlayer = False
         self.net = None
+        self.room = None
 
 
     def __eq__(self, otherPlayer):

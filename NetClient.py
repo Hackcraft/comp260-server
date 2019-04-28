@@ -12,45 +12,42 @@ from Player import Player
 
 hook = Hook()
 
-class ClientData:
-    def __init__(self):
-        self.serverSocket = None
-        self.connectedToServer = False
-        self.running = True
-        self.incomingMessage = ""
-        self.currentBackgroundThread = None
-        self.currentReceivethread = None
-
 class NetClient(NetBase):
 
-    clientData = ClientData()
     clientDataLock = threading.Lock()
     ip = None
     port = None
     localPlayer = True
 
+    serverSocket = None
+    connectedToServer = False
+    running = True
+    incomingMessage = ""
+    backgroundThread = None
+    receiveThread = None
+
     def __init__(self, ip = "127.0.0.1", port = 8222):
         super().__init__()
         self.ip = ip
         self.port = port
-        self.backgroundThread = threading.Thread(target=self.BackgroundThread, args=(self.clientData,))
+        self.backgroundThread = threading.Thread(target=self.BackgroundThread, args=(self,))
         self.backgroundThread.start()
 
-    def ServerReceive(self, clientData):
+    def ServerReceive(self):
         print("receiveThread Running")
         netPacket = NetPacket()
 
-        while clientData.connectedToServer is True:
+        while self.connectedToServer is True:
             try:
                 # Read the incoming data
-                packetID = clientData.serverSocket.recv(4)
+                packetID = self.serverSocket.recv(4)
                 packetID = packetID.decode("utf-8")
 
                 if packetID == self.PACKET_ID:
 
-                    dataSize = int.from_bytes(clientData.serverSocket.recv(2), "little")
+                    dataSize = int.from_bytes(self.serverSocket.recv(2), "little")
 
-                    data = clientData.serverSocket.recv(dataSize)
+                    data = self.serverSocket.recv(dataSize)
 
                     try:
                         print("Decoding")
@@ -68,33 +65,33 @@ class NetClient(NetBase):
                 print("Server lost")
                 self.hasConnection = False
                 hook.Run("DisconnectedFromServer", (self.ip, self.port))
-                clientData.connectedToServer = False
-                clientData.serverSocket = None
+                self.connectedToServer = False
+                self.serverSocket = None
 
-    def BackgroundThread(self, clientData):
+    def BackgroundThread(self):
         print("backgroundThread running")
-        clientData.connectedToServer = False
+        self.connectedToServer = False
 
-        while (clientData.connectedToServer is False) and (clientData.running is True):
+        while (self.connectedToServer is False) and (self.running is True):
             try:
-                if clientData.serverSocket is None:
-                    clientData.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                if self.serverSocket is None:
+                    self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-                if clientData.serverSocket is not None:
-                    clientData.serverSocket.connect((self.ip, self.port))
+                if self.serverSocket is not None:
+                    self.serverSocket.connect((self.ip, self.port))
 
                 # Connected to server - create localPlayer
-                self.localPlayer = Player(clientData.serverSocket, self)
+                self.localPlayer = Player(self.serverSocket, self)
                 self.hasConnection = True
 
-                clientData.connectedToServer = True
-                clientData.receiveThread = threading.Thread(target=self.ServerReceive, args=(self.clientData,))
-                clientData.receiveThread.start()
+                self.connectedToServer = True
+                self.receiveThread = threading.Thread(target=self.ServerReceive, args=(self,))
+                self.receiveThread.start()
 
                 print("connected")
                 hook.Run("ConnectedToServer", (self.ip, self.port))
 
-                while clientData.connectedToServer is True:
+                while self.connectedToServer is True:
                     time.sleep(1.0)
 
             except socket.error:
@@ -105,20 +102,20 @@ class NetClient(NetBase):
 
     def Send(self):
         try:
-            super().Send(self.clientData.serverSocket)
+            super().Send(self.serverSocket)
             print("Sending: " + self.netPacket.GetTag())
         except socket.error:
             print("Failed to send data to server!")
 
     def CloseConnection(self):
-        if self.clientData.serverSocket is not None:
-            self.clientData.serverSocket.close()
-            self.clientData.serverSocket = None
-            self.clientData.connectedToServer = False
-            self.clientData.running = False
+        if self.serverSocket is not None:
+            self.serverSocket.close()
+            self.serverSocket = None
+            self.connectedToServer = False
+            self.running = False
 
-            if self.clientData.currentReceivethread is not None:
-                self.clientData.currentReceivethread.join()
+            if self.receiveThread is not None:
+                self.receiveThread.join()
 
-            if self.clientData.currentBackgroundThread is not None:
-                self.clientData.currentBackgroundThread.join()
+            if self.backgroundThread is not None:
+                self.backgroundThread.join()

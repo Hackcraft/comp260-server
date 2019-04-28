@@ -2,6 +2,8 @@
     Base class for GameState execution classes
 '''
 
+from NetClient import NetClient
+from Command import Command
 from Hook import Hook
 from GameState import GameState
 
@@ -22,8 +24,9 @@ class Base:
 
     }
 
-    def __init__(self, net, concommand, hook):
-        self.net = net
+    def __init__(self, player, concommand, hook):
+        self.player = player
+        self.net = player.net
         self.concommand = concommand
         self.hook = hook
 

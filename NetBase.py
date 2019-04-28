@@ -93,6 +93,7 @@ class NetBase:
 
     def RunReceiver(self, netPacket, clientSocket):
         self.receiversLock.acquire()
+
         if netPacket.GetTag() in self.receivers:
             func, condition = self.receivers[netPacket.GetTag()]
             print("Running: " + netPacket.GetTag())
@@ -105,6 +106,10 @@ class NetBase:
                     func(netPacket, clientSocket)
                 else:
                     print("Condition not met for: " + netPacket.GetTag())
+
+        elif netPacket.GetTag() != netPacket.invalidPacketTag:
+            print("No receivers found for: " + netPacket.GetTag())
+
         self.receiversLock.release()
 
     def Update(self):

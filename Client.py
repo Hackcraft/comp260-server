@@ -22,6 +22,7 @@ from Command import Command
 from GameState import GameState
 
 net = NetClient("127.0.0.1", 8222)
+localPlayer = Player(net)
 hook = Hook()
 room = None
 concommand = Command()
@@ -66,7 +67,7 @@ class Example(QWidget):
     def timerEvent(self):
         if messageQueue.qsize() > 0:
             self.chatOutput.appendPlainText(messageQueue.get())
-        if net.clientData.connectedToServer:
+        if net.connectedToServer:
             self.setWindowTitle('Multi user Dungeon | Connected to: ' + str(net.ip) + ":" + str(net.port))
         else:
             self.setWindowTitle('Multi user Dungeon | Not connected to server')
