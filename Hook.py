@@ -7,39 +7,37 @@ import threading
 class Hook:
 
 	hooks = {}
-	hooksLock = threading.Lock()
+	hooksLock = threading.RLock()  # Allow for recursive locking (hook.Run calling hook.Run etc....)
 
 	def __init__(self):
 		pass
 
 	def Add(self, eventName, identifier, func):
-		self.hooksLock.acquire()
-		if not eventName in self.hooks:
-			self.hooks[eventName] = {}
-		self.hooks[eventName][identifier] = func
-		self.hooksLock.release()
-		print("Adding " + eventName + identifier)
+		print("Adding: " + eventName)
+		with self.hooksLock:
+			if eventName not in self.hooks:
+				self.hooks[eventName] = {}
+			self.hooks[eventName][identifier] = func
+		print("[hook add] Adding " + eventName + " " + identifier)
 
 	def Run(self, eventName, args = ()):
+		print("Running: " + eventName)
 		output = None
-		self.hooksLock.acquire()
-		print("acquire?")
-		print(str(eventName in self.hooks))
-		if eventName in self.hooks:
-			print("eventName in self.hooks?")
-			output = None
-			for identifier in self.hooks[eventName]:
-				print(eventName + " " + identifier)
-				output = self.hooks[eventName][identifier](args)
-				if output != None:
-					break
-		self.hooksLock.release()
+		with self.hooksLock:
+			print(eventName + " " + str(eventName in self.hooks))
+			if eventName in self.hooks:
+				output = None
+				for identifier in self.hooks[eventName]:
+					print("[hook run] " + eventName + " " + identifier)
+					output = self.hooks[eventName][identifier](args)
+					if output != None:
+						break
 		return output
 
 	def Remove(self, eventName, identifier):
-		self.hooksLock.acquire()
-		if eventName in self.hooks and identifier in self.hooks[eventName]:
-			self.hooks[eventName][identifier] = None
-			self.hooks[eventName].pop(identifier, None)
-		self.hooksLock.release()
+		print("Removing: " + eventName)
+		with self.hooksLock:
+			if eventName in self.hooks and identifier in self.hooks[eventName]:
+				self.hooks[eventName][identifier] = None
+				self.hooks[eventName].pop(identifier, None)
 

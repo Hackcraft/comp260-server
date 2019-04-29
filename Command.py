@@ -17,6 +17,7 @@ class Command:
         self.commandsLock.acquire()
         self.commands[command] = callback
         self.commandsLock.release()
+        print("[command add] Added: " + command)
 
     def Run(self, player, command, argsStr):
         self.commandsLock.acquire()
@@ -24,10 +25,12 @@ class Command:
             args = self.StringToArgs(argsStr)
             args.pop(0)  # Remove command from args
             self.commands[command](player, command, args, argsStr)
+            print("[command run] Ran: " + command)
         elif self.IsInOtherLanguage(command):
             args = self.StringToArgs(argsStr)
             args.pop(0)  # Remove command from args
             self.commands[command](player, self.GetInOtherLanguage(command), args, argsStr)
+            print("[command run] Ran: " + command)
 
         self.commandsLock.release()
 
@@ -54,5 +57,6 @@ class Command:
         self.commandsLock.acquire()
         if commandName in self.commands:
             self.commands[commandName] = None
+            print("[command remove] Removed: " + commandName)
         self.commandsLock.release()
 

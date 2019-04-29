@@ -10,6 +10,7 @@ from NetBase import NetBase
 from NetPacket import NetPacket
 from Hook import Hook
 from Player import Player
+from GameState import GameState
 
 hook = Hook()
 
@@ -46,6 +47,7 @@ class NetServer(NetBase):
     iHavePortForwarded = False
 
     def __init__(self, ip = None, port = None):
+        self.Receive("Verify", self.ClientVerifyLoopback, lambda player: player.gameState is None)
         if self.serverSocket == None:
             self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -175,8 +177,8 @@ class NetServer(NetBase):
                         player = self.players[clientSocket]
 
                         # Pass to the right Receive function
-                        self.inputQueue(player, netPacket)
-                        #self.RunReceiver(netPacket, player)
+                        #self.inputQueue(player, netPacket)
+                        self.RunReceiver(netPacket, player)
             except socket.error:
                 print("ClientReceive - lost client");
                 clientValid = False
@@ -264,6 +266,11 @@ class NetServer(NetBase):
 
         for player in self.players:
             player.thread.join()
+
+
+    def ClientVerifyLoopback(self, netPacket, player):
+        self.Start("Verified")
+        self.Send(player)
 
 
     def __del__(self):

@@ -26,12 +26,41 @@ class NetClient(NetBase):
     backgroundThread = None
     receiveThread = None
 
-    def __init__(self, ip = "127.0.0.1", port = 8222):
+    # States
+    STATE_IDLE = 0
+    STATE_CONNECT = 1
+    STATE_VERIFY = 2
+    STATE_CONNECTED = 3
+
+    # Time in seconds to wait for a response from the server
+    verifyTimeout = 2
+    verifyStartTime = 0
+    connectionCheckThread = None
+
+    def __init__(self):
+        self.state = self.STATE_IDLE
+        self.Receive("Verified", self.ServerValidated)
         super().__init__()
+
+    def Connect(self, ip = "127.0.0.1", port = 8222):
+        # Stop any existing connections
+        self.CloseConnection()
+
+        # Update the state
+        self.state = self.STATE_CONNECT
+
+        # Update the new ip + port
         self.ip = ip
         self.port = port
-        self.backgroundThread = threading.Thread(target=self.BackgroundThread, args=(self,))
+#        self.running = True
+
+        # Setup the socket
+        self.backgroundThread = threading.Thread(target=self.BackgroundThread, args=())
         self.backgroundThread.start()
+
+    def Disconnect(self):
+        self.running = False
+        self.CloseConnection()
 
     def ServerReceive(self):
         print("receiveThread Running")
@@ -72,7 +101,7 @@ class NetClient(NetBase):
         print("backgroundThread running")
         self.connectedToServer = False
 
-        while (self.connectedToServer is False) and (self.running is True):
+        while self.state is self.STATE_CONNECT:
             try:
                 if self.serverSocket is None:
                     self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -80,25 +109,61 @@ class NetClient(NetBase):
                 if self.serverSocket is not None:
                     self.serverSocket.connect((self.ip, self.port))
 
-                # Connected to server - create localPlayer
-                self.localPlayer = Player(self.serverSocket, self)
-                self.hasConnection = True
+                print(self.ip, str(self.port))
+
+                # Validate the server is running the server
+
+                # Connected to server - create localPlayer TODO use Player from client
+#                self.localPlayer = Player(self.serverSocket, self)
+#                self.hasConnection = True
 
                 self.connectedToServer = True
-                self.receiveThread = threading.Thread(target=self.ServerReceive, args=(self,))
+                self.receiveThread = threading.Thread(target=self.ServerReceive, args=())
                 self.receiveThread.start()
 
-                print("connected")
-                hook.Run("ConnectedToServer", (self.ip, self.port))
+                print("Connected to ip -- still need to verify status")
+                self.verifyStartTime = time.time()
+                self.CheckConnectionAfterDelay()
+
+                #print("connected")
+                #hook.Run("ConnectedToServer", (self.ip, self.port))
 
                 while self.connectedToServer is True:
                     time.sleep(1.0)
 
             except socket.error:
                 print("no connection")
-                time.sleep(1)
+                self.state = self.STATE_IDLE
+                hook.Run("ServerVerificationTimeout", (self.ip, self.port))
+                #time.sleep(1)
                 #self.clientDataLock.acquire()
                 #self.clientDataLock.release()
+
+    def CheckConnectionAfterDelay(self):
+        print("PENIS")
+        self.connectionCheckThread = threading.Thread(target=self.DelayedConnectionCheck, args=())
+        self.state = self.STATE_VERIFY
+        self.connectionCheckThread.start()
+
+        # Send verification request
+        self.Start("Verify")
+        self.Send()
+        print("Asking server to verify if it is a MUD server")
+
+
+    def DelayedConnectionCheck(self):
+        time.sleep(self.verifyTimeout)
+        # If it took too long (server didn't respond)
+        if self.state == self.STATE_VERIFY and time.time() - self.verifyStartTime >= self.verifyTimeout:
+            self.state = self.STATE_IDLE
+            hook.Run("ServerVerificationTimeout", (self.ip, self.port))
+
+
+    def ServerValidated(self, netpacket):
+        self.state = self.STATE_CONNECTED
+        self.connectedToServer = True
+        hook.Run("ConnectedToServer", (self.ip, self.port))
+
 
     def Send(self):
         try:

@@ -20,8 +20,14 @@ class ServerList:
 
     @classmethod
     def IPFromName(cls, name):
-        return cls._servers[name][0]
+        if name in cls._servers:
+            return cls._servers[name][0]
+        else:
+            return None
 
     @classmethod
     def PortFromName(cls, name):
-        return cls._servers[name][1]
+        if name in cls._servers:
+            return cls._servers[name][1]
+        else:
+            return None

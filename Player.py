@@ -3,19 +3,19 @@ from GameState import GameState
 
 class Player(Entity):
 
-    def __init__(self, socket, net, clientName = "unassigned"):
+    def __init__(self, net, hook = None, clientName = "unassigned"):
         super().__init__()
         self.username = False
         self.tag = "player"
-        self.socket = socket
+        self.socket = None
         self.nick = clientName
         self.isConnected = False
-        self.gameState = GameState.OFFLINE
+        self.gameState = None
         self.isAdmin = False
-        self.isLocalPlayer = False
-        self.net = None
+#        self.isLocalPlayer = False
+        self.net = net
+        self.hook = hook
         self.room = None
-
 
     def __eq__(self, otherPlayer):
         if not isinstance(otherPlayer, Player):
@@ -23,12 +23,15 @@ class Player(Entity):
         return self.socket == otherPlayer.socket
 
     def SetGameState(self, gameState):
-        if self.isLocalPlayer:
+        print("Setting gamestate to: " + GameState.states[gameState])
+        if self.IsLocalPlayer():
+            old = self.gameState
             self.gameState = gameState
+            self.hook.Run("GameStateChanged", (old, gameState))
         else:
             self.net.Start("gamestate")
             self.net.WriteGameState(gameState)
-            self.net.Send()
+            self.net.Send(self)
 #
 #    def SetNet(self, net, isServerside):
 #        self.isLocalPlayer = not isServerside
