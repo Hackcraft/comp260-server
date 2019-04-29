@@ -86,7 +86,8 @@ class Example(QWidget):
 
     def timerEvent(self):
         if messageQueue.qsize() > 0:
-            self.chatOutput.appendPlainText(messageQueue.get())
+            while(messageQueue.qsize() > 0):
+                self.chatOutput.appendPlainText(messageQueue.get())
         if net.state == net.STATE_CONNECTED:
             self.setWindowTitle('Multi user Dungeon | Connected to: ' + str(net.ip) + ":" + str(net.port))
         elif net.state != net.STATE_IDLE:
@@ -205,59 +206,6 @@ hook.Add("NotifyUser", "UI", NotifyUser)
 #
 #
 
-def HandleHelp(netPacket):
-    print("Packet")
-    messageQueue.put(netPacket.Release())
-
-
-net.Receive("help", HandleHelp)
-
-
-def HandleChat(netPacket):
-    messageQueue.put(netPacket.Release())
-
-
-net.Receive("Chat", HandleChat)
-
-
-def EnteredRoom(netPacket):
-    global room
-
-    connections = netPacket.Release()
-    description = netPacket.Release()
-
-    directions = connections.split(",")
-    directionVectors = []
-    languageDirs = ""
-    for i in range(0, len(directions)):
-        coords = directions[i].split(" ")
-        if len(coords) == 2:
-            vec2 = Vector2(coords[0], coords[1])
-            directionVectors.append(vec2)
-            languageDirs += Language.ValueToWord("direction", vec2) + ","
-    languageDirs = languageDirs[:-1]
-
-    # Update our local room
-    room = Room(0, directionVectors, description)
-
-    messageQueue.put("Entered new room: \n" +
-                     description + "\n" +
-                     "You can move: \n" +
-                     languageDirs
-    )
-
-
-net.Receive("EnteredRoom", EnteredRoom)
-
-
-def ClearScreen(player = None, command = None, args =  None, argStr = None):
-    UILock.acquire()
-    uiData.shouldClearScreen = True
-    UILock.release()
-
-
-net.Receive("clear", ClearScreen)
-#concommand.Add("clear", ClearScreen)
 
 #
 #
@@ -288,49 +236,10 @@ net.Receive("update_gamestate", UpdateGameState)
 
 #
 #
-#       Commands
+#       Commands (moved to cl_play)
 #
 #
 
-def ShowDirections(player, command, args, argStr):
-    print("hi")
-    global room
-
-    if room is None:
-        return
-
-    languageDirs = ""
-    for direction in room.connections:
-        languageDirs += Language.ValueToWord("direction", direction) + ","
-    languageDirs = languageDirs[:-1]
-
-    messageQueue.put("You can move: \n" + languageDirs)
-
-
-#concommand.Add("directions", ShowDirections)
-
-
-def Move(player, command, args, argStr):
-    global room
-    direction = Language.WordToValue("direction", concommand.StringToArgs(argStr)[1])  # Remove command from string
-
-    if direction is not None:
-        print("direction!")
-        if room is not None:
-            print("ROOM!")
-            if direction in room.connections:
-                print("GO!")
-                print(Language.ValueToBaseWord("direction", direction))
-                net.Start("go")
-                net.Write(Language.ValueToBaseWord("direction", direction))
-                net.Send()
-                return
-
-    # Direction not found
-    messageQueue.put("Not a valid direction: " + argStr)
-
-
-#concommand.Add("go", Move)
 
 #
 #
@@ -346,7 +255,8 @@ def ProcessInput():
 
             firstWord = concommand.StringToArgs(argsStr)[0]
             if concommand.IsCommand(firstWord):
-                concommand.Run(None, firstWord, argsStr)
+                print(localPlayer, firstWord, argsStr)
+                concommand.Run(localPlayer, firstWord, argsStr)
             else:
                 messageQueue.put("Invalid command: " + firstWord)
                 messageQueue.put("Type help for a list of commands.\n")

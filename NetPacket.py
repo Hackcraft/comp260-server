@@ -34,50 +34,28 @@ class NetPacket:
 		self.data = Queue()
 		self.tag = None
 
-	# Return the vector or None
-	def ReadVector(self):
-		data = self.Release()
-		tag = self.DataTag(data)
-		if tag != Vector2.tag:
-			print("Expected tag: " + Vector2.tag + ". Got: " + tag)
-			return None
-		else:
-			return Vector2.FromString(self.StripTag(data))
-
 	def ReadPassword(self):
 		pass  # Encrypt 2x? One for main networking, again for pass
 
-	def ReadGameState(self):
-		data = self.Release()
-		tag = self.DataTag(data)
-		if tag != GameState.tag:
-			print("Expected tag: " + GameState.tag + ". Got: " + tag)
-			return None
-		else:
-			return GameState.FromString(self.StripTag(data))
-
 	def Release(self):
 		if not self.IsEmpty():
-			return self.data.get() # return and remove first element
+			return self.data.get()  # return and remove first element
 		return None
 
 	def IsEmpty(self):
 		return self.data.qsize() < 1
 
-	def WriteVector(self, vec2):
-		self.Append(Vector2.tag + " " + str(vec2))
-
 	def WritePassword(self, passwd):
 		pass
 
-	def WriteGameState(self, gameState):
-		self.Append(GameState.tag + " " + gameState.value)
-
-	def Write(self, type, data):
-		if issubclass(type, NetType):
-			self.Append(type.ToNetString(data))
+	def Write(self, type, data = None):
+		if data is None:
+			self.Append(type)
 		else:
-			raise Exception("Tried to write an object not based off of NetType: " + str(type))
+			if issubclass(type, NetType):
+				self.Append(type.ToNetString(data))
+			else:
+				raise Exception("Tried to write an object not based off of NetType: " + str(type))
 
 	def Read(self, type):
 		raw = self.Release()

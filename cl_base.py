@@ -32,9 +32,12 @@ class Base:
             self.hooks = {}
 
         self.hook.Add("GameStateChanged", self.__class__.__name__, self.GameStateChanged)
+        self.net.Receive("gamestate", self.ServerUpdatedGameState)
 
     def GameStateChanged(self, tupl):
         old, new = tupl
+
+        print("OLD: " + str(old) + " NEW: " + str(new))
 
         if old == new:
             print("[state same] Tried to change states to the current active state")
@@ -46,6 +49,12 @@ class Base:
         elif new == self.gameState:
             self.StartState()
             print("[state start] Started: " + GameState.states[new])
+
+    def ServerUpdatedGameState(self, netPacket):
+        gameState = netPacket.Read(GameState)
+
+        if gameState is not None:
+            self.player.SetGameState(gameState)
 
 
     #
@@ -61,18 +70,23 @@ class Base:
         self.AddHooks()
 
     def AddNets(self):
-        print("Num of commands: " + str(len(self.nets.items())))
-        for tag, tupl in self.nets.items():
-            callback, condition = tupl
+        print("Num of nets: " + str(len(self.nets.items())))
+        for tag in self.nets:
+            callback, condition = self.nets[tag]
+            print(tag, callback, condition)
             self.net.Receive(tag, callback, condition)
 
     def AddCommands(self):
-        for command, callback in self.commands.items():
+        print("Num of commands: " + str(len(self.commands.items())))
+        for command in self.commands:
+            callback = self.commands[command]
             self.concommand.Add(command, callback)
 
     def AddHooks(self):
-        for eventName, tupl in self.hooks.items():
-            identifier, callback = tupl
+        print("Num of hooks: " + str(len(self.hooks.items())))
+        for eventName in self.hooks:
+            identifier, callback = self.hooks[eventName]
+            print(eventName, identifier, callback)
             self.hook.Add(eventName, identifier, callback)
 
     #
@@ -80,24 +94,23 @@ class Base:
     #
 
     def StopState(self):
+        self.RemoveNets()
         self.RemoveCommands()
         self.RemoveHooks()
-        self.RemoveNets()
 
     def RemoveNets(self):
-        for tag, tupl in self.nets.items():
-            callback, condition = tupl
+        for tag in self.nets:
+            callback, condition = self.nets[tag]
             self.net.RemoveReceive(tag)
 
     def RemoveCommands(self):
-        for command, callback in self.commands.items():
+        for command in self.commands:
             self.concommand.Remove(command)
 
     def RemoveHooks(self):
-        for eventName, tupl in self.hooks.items():
+        for eventName in self.hooks:
             print(eventName)
-            print(tupl)
-            identifier, callback = tupl
+            identifier, callback = self.hooks[eventName]
             self.hook.Remove(eventName, identifier)
 
     #

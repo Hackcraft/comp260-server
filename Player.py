@@ -16,6 +16,7 @@ class Player(Entity):
         self.net = net
         self.hook = hook
         self.room = None
+        print("Creating new player")
 
     def __eq__(self, otherPlayer):
         if not isinstance(otherPlayer, Player):
@@ -29,8 +30,9 @@ class Player(Entity):
             self.gameState = gameState
             self.hook.Run("GameStateChanged", (old, gameState))
         else:
+            self.gameState = gameState
             self.net.Start("gamestate")
-            self.net.WriteGameState(gameState)
+            self.net.Write(GameState, gameState)
             self.net.Send(self)
 #
 #    def SetNet(self, net, isServerside):

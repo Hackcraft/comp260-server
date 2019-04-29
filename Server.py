@@ -28,13 +28,13 @@ login = Login(net, hook)
 
 def handleClientLost(player):
     # Log the player disconnect
-    print("Removing lost client: " + player.name)
+    print("Removing lost client: " + player.nick)
 
     # Notify everyone of the disconnect
     net.playersLock.acquire()
     for key in net.players:
         if net.players[key].socket != player.socket:
-            string = player.name + " has left the server\n"
+            string = player.nick + " has left the server\n"
             net.Start("Chat")
             net.Write(string)
             net.Send(net.players[key])
@@ -45,27 +45,29 @@ hook.Add("PlayerLost", "LostMessages", handleClientLost)
 
 def handleClientJoined(player):
     # Update their local game state (defaults to Login in Player)
-    net.Start("gamestate")
-    net.Write(GameState, GameState.LOGIN)
-    net.Send(player)
+#    net.Start("gamestate")
+#    net.Write(GameState, GameState.PLAY)
+#    net.Send(player)
+
+    player.SetGameState(GameState.PLAY)
 
     # Send login screen
     #login.RequestLogin(player)
 
     '''
     # Log the player connection
-    print("Client joined: " + player.name)
+    print("Client joined: " + player.nick)
 
     # Personal Welcome message
     outputToUser = "Welcome to chat, speak your brains here! "
-    outputToUser += "You are: " + player.name +"\n"
+    outputToUser += "You are: " + player.nick +"\n"
     outputToUser += "Present in server:\n"
 
     # Personal list of connected clients
     net.playersLock.acquire()
     for key in net.players:
         if net.players[key] != player:
-            outputToUser += net.players[key].name + "\n"
+            outputToUser += net.players[key].nick + "\n"
     net.playersLock.release()
 
     net.Start("Chat")
@@ -76,7 +78,7 @@ def handleClientJoined(player):
     net.playersLock.acquire()
     for key in net.players:
         if net.players[key].socket != player.socket:
-            string = player.name + " has joined the chat room\n"
+            string = player.nick + " has joined the chat room\n"
             net.Start("Chat")
             net.Write(string)
             net.Send(net.players[key])
@@ -96,9 +98,6 @@ def main():
 # Say
 def SendLocalChat(turp):
     player, message = turp
-    # Only works in play mode
-    if player.gameState != GameState.PLAY:
-        return
 
     # Other players
     net.playersLock.acquire()
@@ -109,7 +108,7 @@ def SendLocalChat(turp):
     for key in players:
         if players[key].pos == player.pos:
             net.Start("Chat")
-            net.Write(player.name + ": " + message)
+            net.Write(player.nick + ": " + message)
             net.Send(players[key])
 
 
@@ -119,7 +118,6 @@ hook.Add("PlayerSay", "LocalChat", SendLocalChat)
 def HandleSay(netPacket, player):
     message = netPacket.Release()
     hook.Run("PlayerSay", (player, message))
-
 
 net.Receive("say", HandleSay, lambda player: player.gameState == GameState.PLAY)
 

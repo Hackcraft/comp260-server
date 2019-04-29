@@ -32,6 +32,7 @@ class GameState(NetType):
 
     @classmethod
     def ToNetString(cls, gameState):
+        print("-----" + str(gameState))
         return cls.tag + " " + str(gameState)  # gameState will be passed as an int
 
     @classmethod

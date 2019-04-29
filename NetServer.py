@@ -51,8 +51,6 @@ class NetServer(NetBase):
         if self.serverSocket == None:
             self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-            hasConnection = False
-
             # If no ip has been provided - workout which to use
             if ip is None:
 
@@ -86,7 +84,9 @@ class NetServer(NetBase):
                         localSuccess = self.TryLocalSocket()
 
                         if not localSuccess:
+                            print("----WARNING----/n/n")
                             print("Something is really wrong. Cannot bind to any ip. Are there multiple instances?")
+                            print("----WARNING----/n/n")
 
             # If an if has been provided - try and use it
             else:
@@ -179,8 +179,8 @@ class NetServer(NetBase):
                         # Pass to the right Receive function
                         #self.inputQueue(player, netPacket)
                         self.RunReceiver(netPacket, player)
-            except socket.error:
-                print("ClientReceive - lost client");
+            except:
+                print("ClientReceive - lost client")
                 clientValid = False
 
                 # Make a copy of the client
@@ -211,8 +211,10 @@ class NetServer(NetBase):
                 self.playersLock.acquire()
                 self.playersSinceStart += 1
 
-                player = Player(clientSocket, "Client " + str(self.playersSinceStart))
+                player = Player(self)
                 player.socket = clientSocket
+                player.username = "Client " + str(self.playersSinceStart)
+                player.nick = "Client " + str(self.playersSinceStart)
                 player.isConnected = True
                 player.id = self.playersSinceStart
 
@@ -226,7 +228,7 @@ class NetServer(NetBase):
                 player.thread = thread
 
                 # Tell stuff they joined
-                hook.Run("PlayerJoined", player)
+                #hook.Run("PlayerJoined", player)
 
     def Send(self, targetSocket):
         try:
@@ -265,12 +267,15 @@ class NetServer(NetBase):
         self.acceptThread.join()
 
         for player in self.players:
-            player.thread.join()
+            self.players[player].thread.join()
 
 
     def ClientVerifyLoopback(self, netPacket, player):
         self.Start("Verified")
         self.Send(player)
+
+        hook.Run("PlayerJoined", player)
+        #player.SetGameState(GameState.PLAY)
 
 
     def __del__(self):

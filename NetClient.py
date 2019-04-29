@@ -91,6 +91,7 @@ class NetClient(NetBase):
                     else:
                         self.RunReceiver(netPacket, None)
             except socket.error:
+                self.state = self.STATE_IDLE
                 print("Server lost")
                 self.hasConnection = False
                 hook.Run("DisconnectedFromServer", (self.ip, self.port))
@@ -100,6 +101,7 @@ class NetClient(NetBase):
     def BackgroundThread(self):
         print("backgroundThread running")
         self.connectedToServer = False
+        runningTimeout = False
 
         while self.state is self.STATE_CONNECT:
             try:
@@ -109,7 +111,7 @@ class NetClient(NetBase):
                 if self.serverSocket is not None:
                     self.serverSocket.connect((self.ip, self.port))
 
-                print(self.ip, str(self.port))
+                #print(self.ip, str(self.port))
 
                 # Validate the server is running the server
 
@@ -121,26 +123,20 @@ class NetClient(NetBase):
                 self.receiveThread = threading.Thread(target=self.ServerReceive, args=())
                 self.receiveThread.start()
 
-                print("Connected to ip -- still need to verify status")
-                self.verifyStartTime = time.time()
-                self.CheckConnectionAfterDelay()
-
                 #print("connected")
                 #hook.Run("ConnectedToServer", (self.ip, self.port))
 
-                while self.connectedToServer is True:
-                    time.sleep(1.0)
-
             except socket.error:
-                print("no connection")
-                self.state = self.STATE_IDLE
-                hook.Run("ServerVerificationTimeout", (self.ip, self.port))
+                pass
                 #time.sleep(1)
                 #self.clientDataLock.acquire()
                 #self.clientDataLock.release()
 
+            if not runningTimeout and self.state is not self.STATE_CONNECTED:
+                self.verifyStartTime = time.time()
+                self.CheckConnectionAfterDelay()
+
     def CheckConnectionAfterDelay(self):
-        print("PENIS")
         self.connectionCheckThread = threading.Thread(target=self.DelayedConnectionCheck, args=())
         self.state = self.STATE_VERIFY
         self.connectionCheckThread.start()

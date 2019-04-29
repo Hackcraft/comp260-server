@@ -16,52 +16,45 @@ class NetBase:
     localPlayer = False
 
     # References to all instances created
-    instancesLock = threading.Lock()
+    instancesLock = threading.RLock()
     netInstances = [] # All instances of NetBase and derivatives
 
     # Multithreading queues (player, netPacket)
     inputQueue = Queue()
 
     # Receivers
-    receiversLock = threading.Lock()
+    receiversLock = threading.RLock()
     receivers = {} # tag : func
+    removed = []
 
     hasConnection = False
 
     def __init__(self):
         self.netPacket = NetPacket()
         # Add this instance to the global list
-        self.instancesLock.acquire()
-        self.netInstances.append(self)
-        self.instancesLock.release()
+        with self.instancesLock:
+            self.netInstances.append(self)
 
     def __del__(self):
         self.Remove()
 
     def Remove(self):
         # Remove this instance from the global list
-        self.instancesLock.acquire()
-        try:
-            self.netInstances.remove(self)
-        except:
-            pass
-        self.instancesLock.release()
+        with self.instancesLock:
+            try:
+                self.netInstances.remove(self)
+            except:
+                pass
 
     def Start(self, tag = None):
         self.netPacket = NetPacket()
         self.netPacket.SetTag(tag)
 
-    def Write(self, type, data):
+    def Write(self, type, data = None):
         self.netPacket.Write(type, data)
-
-    def WriteVector(self, vec2):
-        self.netPacket.WriteVector(self, vec2)
 
     def WritePassword(self, passwd):
         self.netPacket.WritePassword(self, passwd)
-
-    def WriteGameState(self, gameState):
-        self.netPacket.WriteGameState(gameState)
 
     def Send(self, targetSocket):
         try:
@@ -81,36 +74,43 @@ class NetBase:
 
     def Receive(self, tag, func, condition = None):
         # Add to the list of receivers
-        self.receiversLock.acquire()
-        self.receivers[tag] = (func, condition)
-        self.receiversLock.release()
+        with self.receiversLock:
+            if tag in self.removed:
+                return
+
+            print("Got past lock")
+            print(tag, func, condition)
+            try:
+                self.receivers[tag] = (func, condition)
+            except Exception as error:
+                print(error)
+            print(tag, func, condition)
+        print(tag, func, condition)
 
     def RemoveReceive(self, tag):
-        self.receiversLock.acquire()
-        if tag in self.receivers:
-            del self.receivers[tag]
-        self.receiversLock.release()
+        with self.receiversLock:
+            if tag in self.receivers and tag not in self.removed:
+                self.removed.append(tag)
 
     def RunReceiver(self, netPacket, clientSocket):
-        self.receiversLock.acquire()
+        with self.receiversLock:
 
-        if netPacket.GetTag() in self.receivers:
-            func, condition = self.receivers[netPacket.GetTag()]
-            print("Running: " + netPacket.GetTag())
-            # If running on the client - not socket will be passed
-            if clientSocket is None:
-                func(netPacket)
-            else:
-                # If no condition or condition is met
-                if condition is None or condition(clientSocket):
-                    func(netPacket, clientSocket)
+            if netPacket.GetTag() in self.receivers:
+                func, condition = self.receivers[netPacket.GetTag()]
+                print("Running: " + netPacket.GetTag())
+                # If running on the client - not socket will be passed
+                if clientSocket is None:
+                    func(netPacket)
                 else:
-                    print("Condition not met for: " + netPacket.GetTag())
+                    # If no condition or condition is met
+                    if condition is None or condition(clientSocket):
+                        func(netPacket, clientSocket)
+                    else:
+                        print("Condition not met for: " + netPacket.GetTag())
 
-        elif netPacket.GetTag() != netPacket.invalidPacketTag:
-            print("No receivers found for: " + netPacket.GetTag())
+            elif netPacket.GetTag() != netPacket.invalidPacketTag:
+                print("No receivers found for: " + netPacket.GetTag())
 
-        self.receiversLock.release()
 
     def Update(self):
         self.ProcessInput()

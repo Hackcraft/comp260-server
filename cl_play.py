@@ -11,10 +11,14 @@ from Room import Room
 class Play(Base):
 
     gameState = GameState.PLAY
+    room = None
 
     def __init__(self, *args):
         self.nets = {  # "tag" = (callback, condition)
-            "EnteredRoom": self.EnteredRoom
+            "EnteredRoom": (self.EnteredRoom, None),
+            "Chat": (self.ReceiveChat, None),
+            "help": (self.ReceiveHelp, None),
+            "directions": (self.ShowDirections, None),
         }
 
         self.commands = {  # "command" = callback
@@ -48,14 +52,13 @@ class Play(Base):
 
     # Send movement request to the server if it's a valid move in the Language dictionary
     def Move(self, player, command, args, argStr):
-        global room
         vec2 = Language.WordToValue("direction", self.concommand.StringToArgs(argStr)[1])  # Remove command from string
 
         if vec2 is not None:
             print("direction!")
-            if room is not None:
+            if self.room is not None:
                 print("ROOM!")
-                if vec2 in room.connections:
+                if vec2 in self.room.connections:
                     print("GO!")
                     print(Language.ValueToBaseWord("direction", vec2))
                     self.net.Start("go")
@@ -71,9 +74,7 @@ class Play(Base):
     # Net methods
     #
 
-    def EnteredRoom(netPacket):
-        global room
-
+    def EnteredRoom(self, netPacket):
         connections = netPacket.Release()
         description = netPacket.Release()
 
@@ -89,10 +90,27 @@ class Play(Base):
         languageDirs = languageDirs[:-1]
 
         # Update our local room
-        room = Room(0, directionVectors, description)
+        self.room = Room(0, directionVectors, description)
 
-        messageQueue.put("Entered new room: \n" +
+        self.hook.Run("NotifyUser", "EnteredRoom","Entered new room: \n" +
                          description + "\n" +
                          "You can move: \n" +
                          languageDirs
                          )
+
+    def ShowDirections(self, player, command, args, argStr):
+        if self.room is None:
+            return
+
+        languageDirs = ""
+        for direction in self.room.connections:
+            languageDirs += Language.ValueToWord("direction", direction) + ","
+        languageDirs = languageDirs[:-1]
+
+        self.hook.Run("NotifyUser", "You can move: \n" + languageDirs)
+
+    def ReceiveChat(self, netPacket):
+        self.hook.Run("NotifyUser", netPacket.Release())
+
+    def ReceiveHelp(self, netPacket):
+        self.hook.Run("NotifyUser", netPacket.Release())
