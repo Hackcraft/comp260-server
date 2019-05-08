@@ -313,6 +313,9 @@ class NetServer(NetBase):
         self.Send(player)
 
         player.gameState = GameState.LOGIN
+
+        print("Received key from client")
+        print("Sent key to client")
         
         #hook.Run("PlayerJoined", player)
         #player.SetGameState(GameState.PLAY)

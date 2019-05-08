@@ -194,6 +194,9 @@ class NetClient(NetBase):
         
         self.state = GameState.LOGIN
         self.connectedToServer = True
+        
+        print("Server verified")
+        print("Key received from server")
 
         hook.Run("ConnectedToServer", (self.ip, self.port))
 
