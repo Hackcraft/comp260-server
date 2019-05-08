@@ -24,6 +24,7 @@ from Room import Room
 from Command import Command
 from GameState import GameState
 from Player import Player
+from GameState import GameState
 
 from cl_offline import Offline
 from cl_play import Play
@@ -88,9 +89,9 @@ class Example(QWidget):
         if messageQueue.qsize() > 0:
             while(messageQueue.qsize() > 0):
                 self.chatOutput.appendPlainText(messageQueue.get())
-        if net.state == net.STATE_CONNECTED:
+        if net.state >= GameState.LOGIN:
             self.setWindowTitle('Multi user Dungeon | Connected to: ' + str(net.ip) + ":" + str(net.port))
-        elif net.state != net.STATE_IDLE:
+        elif net.state != GameState.OFFLINE:
             self.setWindowTitle('Multi user Dungeon | Connecting to: ' + str(net.ip) + ":" + str(net.port) + "...")
         else:
             self.setWindowTitle('Multi user Dungeon | Not connected to server')

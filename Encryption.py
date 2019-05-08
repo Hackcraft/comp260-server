@@ -3,12 +3,14 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
 
 '''
-    A wrapper encryption class
+    A wrapper encryption class for cryptography
 
     Referenced https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa
 '''
+
 
 class Encryption:
     PUBLIC_EXPONENT = 65537
@@ -20,9 +22,9 @@ class Encryption:
 
     def GeneratePrivateKey(self):
         privateKey = rsa.generate_private_key(
-            public_exponent=self.PUBLIC_EXPONENT,
-            key_size=self.KEY_SIZE,
-            backend=default_backend()
+            public_exponent = self.PUBLIC_EXPONENT,
+            key_size = self.KEY_SIZE,
+            backend = default_backend()
         )
         return privateKey
 
@@ -33,9 +35,9 @@ class Encryption:
         cipherText = publicKey.encrypt(
             message.encode(),
             padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                algorithm=hashes.SHA256(),
-                label=None
+                mgf = padding.MGF1(algorithm = hashes.SHA256()),
+                algorithm = hashes.SHA256(),
+                label = None
             )
         )
         return cipherText
@@ -44,10 +46,26 @@ class Encryption:
         plainText = privateKey.decrypt(
             cipherText,
             padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                algorithm=hashes.SHA256(),
-                label=None
+                mgf = padding.MGF1(algorithm = hashes.SHA256()),
+                algorithm = hashes.SHA256(),
+                label = None
             )
         )
         return plainText.decode(self.CHAR_TYPE)
+
+    def ImportKey(self, data):
+        try:
+            key = load_pem_public_key(data, backend = default_backend())
+        except:
+            return None
+        else:
+            if isinstance(key, rsa.RSAPublicKey):
+                return key
+
+    def ExportKey(self, publicKey):
+        pem = publicKey.public_bytes(
+            encoding = serialization.Encoding.PEM,
+            format = serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+        return pem
 

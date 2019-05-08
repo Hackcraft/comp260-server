@@ -49,8 +49,8 @@ class Offline(Base):
 
     def Connect(self, player = None, command = None, args =  None, argStr = None):
         # Already connecting check
-        if self.net.state is not self.net.STATE_IDLE:  # TODO Check for connected state
-            self.hook.Run("BadCommandArgs", (argStr, "Currently connecting to: " + self.net.ip + ":" + str(self.net.port)))
+        if self.net.state is not GameState.OFFLINE:  # TODO Check for connected state
+            self.hook.Run("BadCommandArgs", (argStr, "Currently connecting to: " + str(self.net.ip) + ":" + str(self.net.port)))
 
         # No args check
         if len(args) < 1:

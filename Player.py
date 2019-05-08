@@ -16,6 +16,8 @@ class Player(Entity):
         self.net = net
         self.hook = hook
         self.room = None
+        self.privateKey = None
+        self.socketPublicKey = None
         print("Creating new player")
 
     def __eq__(self, otherPlayer):

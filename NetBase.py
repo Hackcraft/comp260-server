@@ -7,6 +7,7 @@ import threading
 
 from queue import *
 from NetPacket import NetPacket
+from Encryption import Encryption
 
 class NetBase:
     PACKET_ID = "HMUD"
@@ -26,11 +27,14 @@ class NetBase:
     receiversLock = threading.RLock()
     receivers = {} # tag : func
     removed = []
-
+    
+    encrypt = None
     hasConnection = False
 
     def __init__(self):
         self.netPacket = NetPacket()
+        self.encrypt = Encryption()
+        self.privateKey = self.encrypt.GeneratePrivateKey()
         # Add this instance to the global list
         with self.instancesLock:
             self.netInstances.append(self)
@@ -62,6 +66,12 @@ class NetBase:
 
             # Get the data size and encoded data
             size, data = self.netPacket.Encode()
+            
+            # If there's a public key assigned to the socket, encrypt the data!
+            if self.socketPublicKey:
+                encrypted = self.encrypt.Encrypt(self.socketPublicKey, data)
+                size = len(encrypted).to_bytes(2, byteorder="little")
+                data = encrypted
 
             # Send data size
             targetSocket.send(size)

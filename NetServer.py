@@ -47,7 +47,12 @@ class NetServer(NetBase):
     iHavePortForwarded = False
 
     def __init__(self, ip = None, port = None):
-        self.Receive("Verify", self.ClientVerifyLoopback, lambda player: player.gameState is None)
+        self.Receive(
+            "Verify", 
+            self.ClientVerifyLoopback, 
+            lambda player: player.gameState is None
+        )
+        
         if self.serverSocket == None:
             self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -164,6 +169,12 @@ class NetServer(NetBase):
                     data = clientSocket.recv(dataSize)
 
                     try:
+                        # If there's a private key assigned to the socket, decrypt the data!
+                        if clientSocket.privateKey is not None:
+                            decrypted = encrypt.Decrypt(clientSocket.privateKey, data)
+                            data = decrypted
+                        
+                        
                         print("Decoding")
                         # Load it into a readable format
                         netPacket.DecodeAndLoad(data)
@@ -271,10 +282,39 @@ class NetServer(NetBase):
 
 
     def ClientVerifyLoopback(self, netPacket, player):
+        # load pem public key
+        data = netPacket.Release()
+        if data is None:
+            return
+
+        key = encrypt.ImportKey(data)
+
+        # Stop if no public key
+        if key is None:
+            print("Client sent invalid public key!")
+            return
+        
+        # Save their public key
+        player.socketPublicKey = key
+
+        # Start encrypting future messages
+        player.socket.socketPublicKey = key
+
+        # Start decrypting future messages
+        player.socket.privateKey = self.privateKey
+
+        # Convert our public key to pem
+        publicKey = self.encrypt.GetPublicKey(self.privateKey)
+        pemKey = self.encrypt.ExportKey(publicKey)
+        
+        # Send our public key
         self.Start("Verified")
+        self.Append(pemKey)
         self.Send(player)
 
-        hook.Run("PlayerJoined", player)
+        player.gameState = GameState.LOGIN
+        
+        #hook.Run("PlayerJoined", player)
         #player.SetGameState(GameState.PLAY)
 
 

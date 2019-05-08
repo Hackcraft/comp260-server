@@ -5,8 +5,9 @@ class GameState(NetType):
 
     # Enum type system (enum import was causing problems)
     OFFLINE = 0
-    LOGIN = 1
-    PLAY = 2
+    KEY_EXCHANGE = 1
+    LOGIN = 2
+    PLAY = 3
 
     states = [
         "OFFLINE",
