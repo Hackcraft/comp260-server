@@ -32,7 +32,7 @@ class NetPacket:
 
 	def __init__(self):
 		self.data = Queue()
-		self.tag = None
+		self.tag = self.invalidPacketTag
 
 	def ReadPassword(self):
 		pass  # Encrypt 2x? One for main networking, again for pass
@@ -74,7 +74,7 @@ class NetPacket:
 			print("Tried to read an object with no data or not of NetType: " + raw)
 
 
-	def Append(self, data):
+	def Append(self, data = ""):
 		self.data.put(data)
 
 	# Tag

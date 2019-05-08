@@ -89,7 +89,7 @@ def handleClientJoined(player):
     '''
 
 
-hook.Add("PlayerJoined", "WelcomeMessages", handleClientJoined)
+#hook.Add("PlayerJoined", "WelcomeMessages", handleClientJoined)
 
 def main():
     pass
@@ -172,6 +172,15 @@ def SendRoomInformation(player, room):
     net.Write(roomStr)  # connections
     net.Write(room.description)  # description
     net.Send(player)
+
+def HandleGameStateSwitch(tup):
+    player, oldState, newState = tup
+
+    if newState == GameState.PLAY:
+        SendRoomInformation(player, dungeon.PositionToRoom(player.pos))
+
+
+hook.Add("GameStateChanged", "Play_STATE", HandleGameStateSwitch)
 
 
 def PlayerJoinedRoom(turp):

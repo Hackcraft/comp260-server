@@ -11,6 +11,7 @@ class GameState(NetType):
 
     states = [
         "OFFLINE",
+        "KEY_EXCHANGE",
         "LOGIN",
         "PLAY"
     ]

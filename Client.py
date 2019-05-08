@@ -160,6 +160,7 @@ def DisplayHelpText(args):
 
 
 hook.Add("HelpText", "UI", DisplayHelpText)
+hook.Add("ShowHelp", "UI", DisplayHelpText)
 
 
 # Display a generic list to the user
@@ -201,24 +202,6 @@ def NotifyUser(args):
 hook.Add("NotifyUser", "UI", NotifyUser)
 
 
-#
-#
-#       net.Receive -- GameState PLAY
-#
-#
-
-
-#
-#
-#       net.Receive -- GameState LOGIN
-#
-#
-
-def RequestUsername():
-    pass
-
-#net.Receive()
-
 
 #
 #
@@ -233,13 +216,6 @@ def UpdateGameState(netPacket):
 
 
 net.Receive("update_gamestate", UpdateGameState)
-
-
-#
-#
-#       Commands (moved to cl_play)
-#
-#
 
 
 #

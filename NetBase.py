@@ -29,6 +29,8 @@ class NetBase:
     removed = []
     
     encrypt = None
+    socketPublicKey = None
+    privateKey = None
     hasConnection = False
 
     def __init__(self):
@@ -57,6 +59,9 @@ class NetBase:
     def Write(self, type, data = None):
         self.netPacket.Write(type, data)
 
+    def Append(self, data = None):
+        self.netPacket.Append(data)
+
     def WritePassword(self, passwd):
         self.netPacket.WritePassword(self, passwd)
 
@@ -68,10 +73,14 @@ class NetBase:
             size, data = self.netPacket.Encode()
             
             # If there's a public key assigned to the socket, encrypt the data!
-            if self.socketPublicKey:
+            '''
+            if self.socketPublicKey is not None:
                 encrypted = self.encrypt.Encrypt(self.socketPublicKey, data)
-                size = len(encrypted).to_bytes(2, byteorder="little")
-                data = encrypted
+                if encrypted is not None:
+                    size = len(encrypted).to_bytes(2, byteorder="little")
+                    data = encrypted
+                    print("Encrypted message")
+            '''
 
             # Send data size
             targetSocket.send(size)
@@ -107,9 +116,9 @@ class NetBase:
 
             if netPacket.GetTag() in self.receivers:
                 func, condition = self.receivers[netPacket.GetTag()]
-                print("Running: " + netPacket.GetTag())
                 # If running on the client - not socket will be passed
                 if clientSocket is None:
+                    print("Running: " + netPacket.GetTag())
                     func(netPacket)
                 else:
                     # If no condition or condition is met

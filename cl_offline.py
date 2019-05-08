@@ -24,7 +24,7 @@ class Offline(Base):
 
         self.hooks = {  # "eventName" = (identifier, callback)
             "ServerVerificationTimeout": ("offline", self.ServerNotFound),
-            "UIFullyLoaded": ("ListServers", self.ShowListAndHelp),
+            "UIFullyLoaded": ("ListServers", self.ShowListAndHelp)
         }
         super().__init__(*args)
         self.ListServers()

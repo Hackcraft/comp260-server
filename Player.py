@@ -16,7 +16,6 @@ class Player(Entity):
         self.net = net
         self.hook = hook
         self.room = None
-        self.privateKey = None
         self.socketPublicKey = None
         print("Creating new player")
 
@@ -33,6 +32,7 @@ class Player(Entity):
             self.hook.Run("GameStateChanged", (old, gameState))
         else:
             self.gameState = gameState
+            self.hook.Run("GameStateChanged", (player, old, gameState))
             self.net.Start("gamestate")
             self.net.Write(GameState, gameState)
             self.net.Send(self)

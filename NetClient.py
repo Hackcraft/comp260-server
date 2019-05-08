@@ -32,7 +32,7 @@ class NetClient(NetBase):
     socketPublicKey = None
 
     # Time in seconds to wait for a response from the server
-    verifyTimeout = 2
+    verifyTimeout = 5
     verifyStartTime = 0
     connectionCheckThread = None
 
@@ -46,7 +46,7 @@ class NetClient(NetBase):
         self.CloseConnection()
 
         # Update the state
-        self.state = GameState.KEY_EXCHANGE
+        self.state = GameState.OFFLINE
 
         # Update the new ip + port
         self.ip = ip
@@ -79,9 +79,12 @@ class NetClient(NetBase):
 
                     try:
                         # If there's a private key assigned to the socket, decrypt the data!
-                        if self.serverSocket.privateKey is not None:
-                            decrypted = encrypt.Decrypt(self.serverSocket.privateKey, data)
-                            data = decrypted
+                        print(data)
+#                        if self.privateKey is not None and self.state >= GameState.LOGIN:
+#                            decrypted = self.encrypt.Decrypt(self.privateKey, data)
+##                            if decrypted is not None:
+#                                data = decrypted
+#                                print("Decrypted message")
                         
                         print("Decoding")
                         # Load it into a readable format
@@ -89,7 +92,8 @@ class NetClient(NetBase):
 
                         print("Received")
                         print(netPacket.GetTag())
-                    except:
+                    except Exception as e:
+                        print(e)
                         print("Server sent data which made no sense!")
                         pass
                     else:
@@ -102,7 +106,6 @@ class NetClient(NetBase):
                 self.connectedToServer = False
                 self.serverSocket = None
                 self.socketPublicKey = None
-                self.serverSocket.privateKey = None
 
     def BackgroundThread(self):
         print("backgroundThread running")
@@ -117,29 +120,19 @@ class NetClient(NetBase):
                 if self.serverSocket is not None:
                     self.serverSocket.connect((self.ip, self.port))
 
-                #print(self.ip, str(self.port))
-
-                # Validate the server is running the server
-
-                # Connected to server - create localPlayer TODO use Player from client
-#                self.localPlayer = Player(self.serverSocket, self)
-#                self.hasConnection = True
-
+            except socket.error as error:
+                #print(error)
+                pass
+                #time.sleep(1)
+                #self.clientDataLock.acquire()
+                #self.clientDataLock.release()
+            else:
+                print("Found ip")
                 self.connectedToServer = True
                 self.state = GameState.KEY_EXCHANGE
                 self.receiveThread = threading.Thread(target=self.ServerReceive, args=())
                 self.receiveThread.start()
 
-                #print("connected")
-                #hook.Run("ConnectedToServer", (self.ip, self.port))
-
-            except socket.error:
-                print(socket.error)
-                pass
-                #time.sleep(1)
-                #self.clientDataLock.acquire()
-                #self.clientDataLock.release()
-            if self.state == GameState.KEY_EXCHANGE:
                 self.verifyStartTime = time.time()
                 self.CheckConnectionAfterDelay()
 
@@ -154,11 +147,8 @@ class NetClient(NetBase):
 
         # Send verification request
         self.Start("Verify")
-        self.Append(pemKey)
+        self.Write(pemKey)
         self.Send()
-        
-        # Start decrypting future messages
-        self.serverSocket.privateKey = self.privateKey
 
         print("Asking server to verify if it is a MUD server")
         print("Sending public key")
@@ -170,7 +160,7 @@ class NetClient(NetBase):
         if self.state < GameState.LOGIN and time.time() - self.verifyStartTime >= self.verifyTimeout:
             self.state = GameState.OFFLINE
             hook.Run("ServerVerificationTimeout", (self.ip, self.port))
-            self.serverSocket.privateKey = None
+            self.socketPublicKey = None
 
 
     def ServerValidated(self, netPacket):
@@ -179,7 +169,7 @@ class NetClient(NetBase):
         if data is None:
             return
         
-        key = encrypt.ImportKey(data)
+        key = self.encrypt.ImportKey(data)
         
         # Stop if no public key
         if key is None:
@@ -188,9 +178,6 @@ class NetClient(NetBase):
             
         # We have a key!
         self.socketPublicKey = key
-        
-        # Start encrypting future messages
-        self.serverSocket.socketPublicKey = key
         
         self.state = GameState.LOGIN
         self.connectedToServer = True
@@ -215,7 +202,6 @@ class NetClient(NetBase):
             self.connectedToServer = False
             self.running = False
             self.socketPublicKey = None
-            self.serverSocket.privateKey = None
 
             if self.receiveThread is not None:
                 self.receiveThread.join()

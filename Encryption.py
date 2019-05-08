@@ -4,6 +4,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
+import base64
 
 '''
     A wrapper encryption class for cryptography
@@ -33,14 +34,14 @@ class Encryption:
 
     def Encrypt(self, publicKey, message):
         cipherText = publicKey.encrypt(
-            message.encode(),
+            bytes(message, self.CHAR_TYPE),
             padding.OAEP(
                 mgf = padding.MGF1(algorithm = hashes.SHA256()),
                 algorithm = hashes.SHA256(),
                 label = None
             )
         )
-        return cipherText
+        return message #cipherText
 
     def Decrypt(self, privateKey, cipherText):
         plainText = privateKey.decrypt(
@@ -51,12 +52,13 @@ class Encryption:
                 label = None
             )
         )
-        return plainText.decode(self.CHAR_TYPE)
+        return cipherText #plainText.decode(self.CHAR_TYPE)
 
     def ImportKey(self, data):
         try:
-            key = load_pem_public_key(data, backend = default_backend())
-        except:
+            key = load_pem_public_key(data.encode(self.CHAR_TYPE), backend = default_backend())
+        except ValueError as error:
+            print(error)
             return None
         else:
             if isinstance(key, rsa.RSAPublicKey):
@@ -67,5 +69,5 @@ class Encryption:
             encoding = serialization.Encoding.PEM,
             format = serialization.PublicFormat.SubjectPublicKeyInfo
         )
-        return pem
+        return pem.decode(self.CHAR_TYPE)
 

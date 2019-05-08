@@ -48,10 +48,11 @@ class Play(Base):
     def Help(self, player, command, args, argStr):
         commands = ", ".join(self.concommand.commands)
         #messageQueue.put("The commands are: " + commands)
-        self.hook.Run("ShowHelp")
+        self.hook.Run("ShowHelp", (commands))
 
     # Send movement request to the server if it's a valid move in the Language dictionary
     def Move(self, player, command, args, argStr):
+        print(self.concommand.StringToArgs(argStr)[1])
         vec2 = Language.WordToValue("direction", self.concommand.StringToArgs(argStr)[1])  # Remove command from string
 
         if vec2 is not None:

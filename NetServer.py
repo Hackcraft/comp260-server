@@ -47,10 +47,11 @@ class NetServer(NetBase):
     iHavePortForwarded = False
 
     def __init__(self, ip = None, port = None):
+        super().__init__()
         self.Receive(
             "Verify", 
             self.ClientVerifyLoopback, 
-            lambda player: player.gameState is None
+            lambda player: player.gameState is GameState.KEY_EXCHANGE
         )
         
         if self.serverSocket == None:
@@ -169,10 +170,14 @@ class NetServer(NetBase):
                     data = clientSocket.recv(dataSize)
 
                     try:
+                        player = self.players[clientSocket]
                         # If there's a private key assigned to the socket, decrypt the data!
-                        if clientSocket.privateKey is not None:
+                        '''
+                        if self.privateKey is not None and player.gameState != GameState.KEY_EXCHANGE:
                             decrypted = encrypt.Decrypt(clientSocket.privateKey, data)
                             data = decrypted
+                            print("Decrypted message")
+                        '''
                         
                         
                         print("Decoding")
@@ -182,7 +187,8 @@ class NetServer(NetBase):
                         print("Received")
                         print(netPacket.GetTag())
 
-                    except:
+                    except error:
+                        print(error)
                         pass
                     else:
                         player = self.players[clientSocket]
@@ -190,7 +196,8 @@ class NetServer(NetBase):
                         # Pass to the right Receive function
                         #self.inputQueue(player, netPacket)
                         self.RunReceiver(netPacket, player)
-            except:
+            except socket.error as error:
+                print(error)
                 print("ClientReceive - lost client")
                 clientValid = False
 
@@ -227,7 +234,9 @@ class NetServer(NetBase):
                 player.username = "Client " + str(self.playersSinceStart)
                 player.nick = "Client " + str(self.playersSinceStart)
                 player.isConnected = True
+                player.gameState = GameState.KEY_EXCHANGE
                 player.id = self.playersSinceStart
+                player.hook = self.hook
 
                 self.players[clientSocket] = player
                 self.playersLock.release()
@@ -272,22 +281,27 @@ class NetServer(NetBase):
         self.shouldFindClients = False
         self.shouldStopServer = True
 
-        self.serverSocket.shutdown(socket.SHUT_RD)  # Shutdown, stopping any further receives
-        self.serverSocket.close()
+        if self.serverSocket is not None:
+#            self.serverSocket.shutdown(socket.SHUT_RD)  # Shutdown, stopping any further receives
+            self.serverSocket.close()
 
-        self.acceptThread.join()
+        if self.acceptThread is not None:
+            self.acceptThread.join()
 
-        for player in self.players:
-            self.players[player].thread.join()
+        if self.players is not None:
+            for player in self.players:
+                self.players[player].thread.join()
 
 
     def ClientVerifyLoopback(self, netPacket, player):
         # load pem public key
         data = netPacket.Release()
+
         if data is None:
+            print("Client sent no public key!")
             return
 
-        key = encrypt.ImportKey(data)
+        key = self.encrypt.ImportKey(data)
 
         # Stop if no public key
         if key is None:
@@ -296,12 +310,6 @@ class NetServer(NetBase):
         
         # Save their public key
         player.socketPublicKey = key
-
-        # Start encrypting future messages
-        player.socket.socketPublicKey = key
-
-        # Start decrypting future messages
-        player.socket.privateKey = self.privateKey
 
         # Convert our public key to pem
         publicKey = self.encrypt.GetPublicKey(self.privateKey)
@@ -312,10 +320,10 @@ class NetServer(NetBase):
         self.Append(pemKey)
         self.Send(player)
 
-        player.gameState = GameState.LOGIN
-
         print("Received key from client")
         print("Sent key to client")
+
+        player.SetGameState(GameState.PLAY)
         
         #hook.Run("PlayerJoined", player)
         #player.SetGameState(GameState.PLAY)
