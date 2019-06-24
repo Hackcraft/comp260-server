@@ -20,7 +20,7 @@ class ClientConnection:
     CONNECTED_SECURELY = 4
 
     PACKET_ID = "HMUD"
-    CHAR_TYPE = "utf-8"
+    CHAR_TYPE = "ISO-8859-1"
 
     def __init__(self, socket, index = 0):
         self.incoming_queue = Queue()
@@ -41,8 +41,10 @@ class ClientConnection:
         self.current_receive_thread = threading.Thread(target=self._receive_thread)
         self.current_receive_thread.start()
 
+        self._send(self.encrypt_util.exportPublicKey(self.server_public_key), False)
+
     def _receive_thread(self):
-        print("receiveThread running")
+        print("Server receiveThread running")
 
         while self.state >= self.CONNECTED:
             if self._socket_contains_valid_packet_id():
@@ -73,6 +75,8 @@ class ClientConnection:
                         else:
                             with self.state_lock:
                                 self.state = self.CONNECTED_SECURELY
+
+                            print("Connected to client %d securely!" % self.client_index)
 
 
                     elif self.state == self.CONNECTED_SECURELY:
@@ -115,7 +119,8 @@ class ClientConnection:
 
     def _send_header(self):
         try:
-            self.socket.send(self.PACKET_ID.encode())
+            print(self.PACKET_ID.encode(self.CHAR_TYPE))
+            self.socket.send(self.PACKET_ID.encode(self.CHAR_TYPE))
         except socket.error:
             self._lost_client()
 
@@ -166,7 +171,16 @@ class ClientConnection:
         print("Lost client")
 
     def close(self):
-        pass
+        self.state = self.NO_CONNECTION
+
+        if self.socket is not None:
+            self.socket.close()
+            self.socket = None
+
+        if self.current_receive_thread is not None:
+            self.current_receive_thread.join()
+
+        print("Closed client socket for client: " + str(self.client_index))
 
 
 
@@ -211,7 +225,10 @@ class NetConnection:
         print("Accept thread running!")
 
         while self.accepting_clients:
-            (clientSocket, address) = self.server_socket.accept()
+            try:
+                (clientSocket, address) = self.server_socket.accept()
+            except:
+                pass
 
             # New index
             with self.client_index_lock:
@@ -246,11 +263,21 @@ class NetConnection:
                         print("Lost client")  # TODO HANDLE LOST or move?
 
     def close(self):
+        print("Close!")
         self.accepting_clients = False
 
+        if self.server_socket is not None:
+            self.server_socket.close()
+            self.server_socket = None
+
+        if self._current_accept_thread is not None:
+            self._current_accept_thread.join()
+
         with self.clients_lock:
-            for client in self.clients:
-                client.close()
+            for client_id in self.clients:
+                self.clients[client_id].close()
+
+        print("Closed server socket")
 
     def send(self, client_id, data):
         try:

@@ -1,4 +1,5 @@
 import unittest
+import time
 from client.net_connection import NetConnection as CLConnection
 from server.net_connection import NetConnection as SVConnection
 
@@ -16,8 +17,15 @@ class TestClientServerConnection(unittest.TestCase):
     def tearDown(self):
         self.cl.close()
         self.sv.close()
+        pass
 
     def test_connection(self):
-        pass
+        print("Testing")
+
+        time.sleep(5)
+
+        print("Stopped testing")
+
+
 
 

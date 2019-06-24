@@ -23,7 +23,7 @@ class NetConnection:
     CONNECTED_SECURELY = 5
 
     PACKET_ID = "HMUD"
-    CHAR_TYPE = "utf-8"
+    CHAR_TYPE = "ISO-8859-1"
 
     '''
         Creates a connection to a server
@@ -55,10 +55,12 @@ class NetConnection:
         self.current_receive_thread.start()
 
     def _receive_thread(self):
-        print("receiveThread running")
+        print("Client receiveThread running")
 
         while self.state >= self.CONNECTED:
+            print("Connected")
             if self._socket_contains_valid_packet_id():
+                print("Got id")
                 data = self._socket_get_data()
                 if data is not None:
 
@@ -72,13 +74,19 @@ class NetConnection:
                             self.close()
                             return
                         else:
-                            # Use the public key to send the encryption key to the server
-                            key_data = self.encrypt_util.encryptKey(self.server_public_key, self.encryption_key)
+                            # Send our public key
+                            key_data = self.encrypt_util.exportPublicKey(self.client_public_key)
                             self.send(key_data, False)
+
+                            # Send our aes key encrypted with server's public key
+                            aes_data = self.encrypt_util.encryptKey(self.encryption_key, self.server_public_key)
+                            self.send(aes_data, False)
 
                             # Future connections should now all be encrypted
                             with self.state_lock:
                                 self.state = self.CONNECTED_SECURELY
+
+                            print("Connected to server securely!")
 
                     # Ready to process messages
                     elif self.state == self.CONNECTED_SECURELY:
@@ -107,7 +115,7 @@ class NetConnection:
             self.close()
             return False
         else:
-            return id is self.PACKET_ID
+            return id == self.PACKET_ID
 
     def _socket_get_data(self):
         try:
@@ -122,15 +130,23 @@ class NetConnection:
 
 
     def close(self):
-        self.state = self.NO_CONNECTION
-        self.encryption_key = None
+        print("close3")
+        with self.state_lock:
+            self.state = self.NO_CONNECTION
 
-        self.server_socket.close()
+        if self.server_socket is not None:
+            self.server_socket.close()
+
         self.server_socket = None
-        self.server_public_key = None
 
-        if self.current_receive_thread is not None:
-            self.current_receive_thread.join()
+        ''' Function is sometimes called in the current thread
+            Therefore causing a runtime error
+            The thread show stop by itself anyway because of the state being changed
+        '''
+        #if self.current_receive_thread is not None:
+        #    self.current_receive_thread.join()
+
+        print("close4")
 
 
     '''
@@ -139,19 +155,30 @@ class NetConnection:
             Without encryption - data is expected to already be in bytes
     '''
     def send(self, data, encrypt=True):
+        if not isinstance(data, str):
+            raise ValueError("send only accepts strings!")
+
+        if encrypt:
+            iv, ct = self.encrypt_util.encrypt(self.encryption_key, data)
+            result = json.dumps({'iv': iv, 'ct': ct, 'si': str(1)})
+            data = result
+
+        self._send_header()
+        self._send_data(data.encode(self.CHAR_TYPE))
+
+    def _send_header(self):
         try:
-            self.server_socket.send(self.PACKET_ID.encode())
-            if encrypt:
-                iv, ct = self.encrypt_util.encrypt(self.encryption_key, data)
-                result = json.dumps({'iv': iv, 'ct': ct, 'si': str(1)})
-                self.server_socket.send(len(result).to_bytes(2, byteorder="little"))
-                self.server_socket.send(result.encode())
-            else:
-                self.server_socket.send(len(data).to_bytes(2, byteorder="little"))
-                self.server_socket.send(data)
+            print(self.PACKET_ID.encode(self.CHAR_TYPE))
+            self.server_socket.send(self.PACKET_ID.encode(self.CHAR_TYPE))
         except socket.error:
-            print("Server lost")  # TODO Disconnect client
-            self.close()
+            pass  # TODO _lost_server
+
+    def _send_data(self, data_bytes):
+        try:
+            self.server_socket.send(len(data_bytes).to_bytes(2, byteorder="little"))
+            self.server_socket.send(data_bytes)
+        except socket.error:
+            pass  # TODO _lost_server
 
     def is_connected(self):
         return self.state is not self.NO_CONNECTION
