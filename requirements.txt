@@ -1,5 +1,0 @@
-tormysql
-nest_asyncio
-miniupnpc
-PyQt5
-cryptography
