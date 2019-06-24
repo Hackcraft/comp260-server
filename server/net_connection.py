@@ -63,7 +63,6 @@ class ClientConnection:
                             with self.state_lock:
                                 self.state = self.WAITING_FOR_ENCRYPTION_KEY
 
-
                     elif self.state == self.WAITING_FOR_ENCRYPTION_KEY:
 
                         try:
@@ -119,7 +118,6 @@ class ClientConnection:
 
     def _send_header(self):
         try:
-            print(self.PACKET_ID.encode(self.CHAR_TYPE))
             self.socket.send(self.PACKET_ID.encode(self.CHAR_TYPE))
         except socket.error:
             self._lost_client()
@@ -139,7 +137,7 @@ class ClientConnection:
             self._lost_client()
             return False
         else:
-            return id is self.PACKET_ID
+            return id == self.PACKET_ID
 
     def _socket_get_data(self):
         try:

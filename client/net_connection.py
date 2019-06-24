@@ -50,7 +50,7 @@ class NetConnection:
             raise ValueError('Could not connect to socket: %s:%d' % (ip, port))
 
         # Start listening to responses from the server
-        self.state = self.WAITING_FOR_ENCRYPTION_KEY
+        self.state = self.WAITING_FOR_PUBLIC_KEY
         self.current_receive_thread = threading.Thread(target=self._receive_thread)
         self.current_receive_thread.start()
 
@@ -58,14 +58,12 @@ class NetConnection:
         print("Client receiveThread running")
 
         while self.state >= self.CONNECTED:
-            print("Connected")
             if self._socket_contains_valid_packet_id():
-                print("Got id")
                 data = self._socket_get_data()
                 if data is not None:
 
                     # Ready to receive encryption key (public key)
-                    if self.state == self.WAITING_FOR_ENCRYPTION_KEY:
+                    if self.state == self.WAITING_FOR_PUBLIC_KEY:
                         try:
                             # Save the public key from the server
                             self.server_public_key = self.encrypt_util.importPublicKey(data)
@@ -79,8 +77,8 @@ class NetConnection:
                             self.send(key_data, False)
 
                             # Send our aes key encrypted with server's public key
-                            aes_data = self.encrypt_util.encryptKey(self.encryption_key, self.server_public_key)
-                            self.send(aes_data, False)
+                            aes_data = self.encrypt_util.encryptKey(self.server_public_key, self.encryption_key)
+                            self.send(aes_data.decode(self.CHAR_TYPE), False)
 
                             # Future connections should now all be encrypted
                             with self.state_lock:
@@ -130,7 +128,6 @@ class NetConnection:
 
 
     def close(self):
-        print("close3")
         with self.state_lock:
             self.state = self.NO_CONNECTION
 
@@ -145,8 +142,6 @@ class NetConnection:
         '''
         #if self.current_receive_thread is not None:
         #    self.current_receive_thread.join()
-
-        print("close4")
 
 
     '''
