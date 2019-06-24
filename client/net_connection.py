@@ -93,7 +93,8 @@ class NetConnection:
                         try:
                             msg_encoded = self.encrypt_util.decrypt(self.encryption_key, arr['iv'], arr["ct"])
                             msg = msg_encoded.decode(self.CHAR_TYPE)
-                        except:
+                        except Exception as e:
+                            print(e)
                             print("Error decrypting message from server")
                         else:
                             self.incoming_queue.put(msg)
@@ -154,7 +155,7 @@ class NetConnection:
             raise ValueError("send only accepts strings!")
 
         if encrypt:
-            iv, ct = self.encrypt_util.encrypt(self.encryption_key, data)
+            iv, ct = self.encrypt_util.encrypt(self.encryption_key, data.encode(self.CHAR_TYPE))
             result = json.dumps({'iv': iv, 'ct': ct, 'si': str(1)})
             data = result
 

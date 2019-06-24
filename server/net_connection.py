@@ -1,6 +1,7 @@
 import socket
 import threading
 import json
+import time
 
 from queue import *
 from base64 import *
@@ -84,12 +85,12 @@ class ClientConnection:
                         if 'si' in arr and self._is_valid_sequence_id(arr['si']):
                             try:
                                 iv = arr['iv'] #self.encrypt_util.decryptKey(self.server_private_key, arr['iv'])
-                                ct = self.encrypt_util.decrypt(self.encryption_key, iv, arr['ct'])
+                                ct = arr['ct'] #self.encrypt_util.decrypt(self.encryption_key, iv, arr['ct'])
 
                                 msg_encoded = self.encrypt_util.decrypt(self.encryption_key, iv, ct)
                                 msg = msg_encoded.decode(self.CHAR_TYPE)
                             except:
-                                print("Error decrypting message from server")
+                                print("Error decrypting message from client")
                                 pass
                             else:
                                 self.incoming_queue.put(msg)
@@ -219,6 +220,9 @@ class NetConnection:
         self._current_accept_thread = threading.Thread(target=self._accept_thread)
         self._current_accept_thread.start()
 
+        self._current__client_message_group_thread = threading.Thread(target=self._client_message_group_thread)
+        self._current__client_message_group_thread.start()
+
     def _accept_thread(self):
         print("Accept thread running!")
 
@@ -248,20 +252,23 @@ class NetConnection:
         print("Putting client messages into one central queue")
 
         while self.accepting_clients:
-            with self.clients_lock:
+            time.sleep(0.1)
+            try:
                 for client in self.clients:
-                    if client.is_connected():
-                        while client.incoming_queue.qsize() > 0:
-                            self.message_queue.put((client.client_index, client.incoming_queue.get()))
+                    if self.clients[client].is_connected():
+                        while self.clients[client].incoming_queue.qsize() > 0:
+                            self.message_queue.put((client, self.clients[client].incoming_queue.get()))
                     else:
-                        self.disconnects.put(client.client_index)
-                        client.close()
-                        del client
+                        self.disconnects.put(client)
+                        self.clients[client].close()
+                        with self.clients_lock:
+                            del self.clients[client]
 
                         print("Lost client")  # TODO HANDLE LOST or move?
+            except:
+                pass
 
     def close(self):
-        print("Close!")
         self.accepting_clients = False
 
         if self.server_socket is not None:

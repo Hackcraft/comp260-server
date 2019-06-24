@@ -22,7 +22,15 @@ class TestClientServerConnection(unittest.TestCase):
     def test_connection(self):
         print("Testing")
 
-        time.sleep(5)
+        time.sleep(2)
+
+        self.cl.send("This is a test")
+
+        time.sleep(1)
+
+        (client_id, message) = self.sv.message_queue.get()
+        print("Client: %d wrote: %s" % (client_id, message))
+
 
         print("Stopped testing")
 

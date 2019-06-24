@@ -2,8 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="f420a999-e3b0-4b27-9b0f-328d4ebf3a4d" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/shared/test/test_encryption_util.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/net_connection.py" beforeDir="false" afterPath="$PROJECT_DIR$/client/net_connection.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/net_connection.py" beforeDir="false" afterPath="$PROJECT_DIR$/server/net_connection.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shared/encryption_util.py" beforeDir="false" afterPath="$PROJECT_DIR$/shared/encryption_util.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/test_client_server_net.py" beforeDir="false" afterPath="$PROJECT_DIR$/test/test_client_server_net.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -26,48 +31,66 @@
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
-          <entry key="py" value="8" />
+          <entry key="py" value="12" />
           <entry key="txt" value="1" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="PLAIN_TEXT" value="1" />
-          <entry key="Python" value="8" />
+          <entry key="Python" value="12" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="py" value="1340" />
+          <entry key="py" value="2144" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="Python" value="1340" />
+          <entry key="Python" value="2144" />
         </counts>
       </usages-collector>
     </session>
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/test/test_client_server_net.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="323">
-              <caret line="19" column="12" lean-forward="true" selection-start-line="19" selection-start-column="12" selection-end-line="19" selection-end-column="12" />
+            <state relative-caret-position="265">
+              <caret line="27" lean-forward="true" selection-start-line="27" selection-end-line="27" />
               <folding>
                 <element signature="e#0#15#0" expanded="true" />
-                <marker date="1561371273024" expanded="true" signature="416:425" ph="..." />
+                <marker date="1561377975336" expanded="true" signature="416:425" ph="..." />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://C:/Program Files (x86)/Python36-32/Lib/unittest/case.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="190">
+              <caret line="58" selection-start-line="58" selection-end-line="58" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/Crypto/Util/Padding.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="190">
+              <caret line="63" selection-start-line="63" selection-end-line="63" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/client/net_connection.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="860">
-              <caret line="56" column="30" lean-forward="true" selection-start-line="56" selection-start-column="30" selection-end-line="56" selection-end-column="30" />
+            <state relative-caret-position="231">
+              <caret line="90" column="27" selection-start-line="90" selection-start-column="24" selection-end-line="90" selection-end-column="27" />
               <folding>
                 <element signature="e#0#13#0" expanded="true" />
               </folding>
@@ -78,8 +101,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/server/net_connection.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="629">
-              <caret line="49" column="55" selection-start-line="49" selection-start-column="55" selection-end-line="49" selection-end-column="55" />
+            <state relative-caret-position="333">
+              <caret line="261" column="31" selection-start-line="261" selection-start-column="31" selection-end-line="261" selection-end-column="31" />
               <folding>
                 <element signature="e#0#13#0" expanded="true" />
               </folding>
@@ -90,11 +113,33 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/shared/encryption_util.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="343">
-              <caret line="74" column="32" lean-forward="true" selection-start-line="74" selection-start-column="32" selection-end-line="74" selection-end-column="32" />
+            <state relative-caret-position="418">
+              <caret line="60" column="33" lean-forward="true" selection-start-line="60" selection-start-column="33" selection-end-line="60" selection-end-column="33" />
               <folding>
                 <element signature="e#0#11#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/shared/test/test_encryption_util.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="221">
+              <caret line="13" column="32" lean-forward="true" selection-start-line="13" selection-start-column="32" selection-end-line="13" selection-end-column="32" />
+              <folding>
+                <element signature="e#0#15#0" expanded="true" />
+                <marker date="1561376776140" expanded="true" signature="147:197" ph="..." />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://C:/Program Files (x86)/Python36-32/Lib/unittest/suite.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="198">
+              <caret line="162" selection-start-line="162" selection-end-line="162" />
             </state>
           </provider>
         </entry>
@@ -112,7 +157,7 @@
         <entry file="file://$PROJECT_DIR$/requirements.txt">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="34">
-              <caret line="2" column="12" lean-forward="true" selection-start-line="2" selection-start-column="12" selection-end-line="2" selection-end-column="12" />
+              <caret line="2" column="17" lean-forward="true" selection-start-line="2" selection-start-column="17" selection-end-line="2" selection-end-column="17" />
             </state>
           </provider>
         </entry>
@@ -135,6 +180,8 @@
       <find>_send</find>
       <find>WAITING_FOR_ENCRYPTION_KEY</find>
       <find>encode</find>
+      <find>Error decrypting message from server</find>
+      <find>encrypt_util.encrypt</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -164,11 +211,12 @@
         <option value="$PROJECT_DIR$/server/__init__.py" />
         <option value="$PROJECT_DIR$/client/__init__.py" />
         <option value="$PROJECT_DIR$/shared/commands.py" />
-        <option value="$PROJECT_DIR$/shared/encryption_util.py" />
         <option value="$PROJECT_DIR$/requirements.txt" />
-        <option value="$PROJECT_DIR$/test/test_client_server_net.py" />
-        <option value="$PROJECT_DIR$/server/net_connection.py" />
+        <option value="$PROJECT_DIR$/shared/test/test_encryption_util.py" />
+        <option value="$PROJECT_DIR$/shared/encryption_util.py" />
         <option value="$PROJECT_DIR$/client/net_connection.py" />
+        <option value="$PROJECT_DIR$/server/net_connection.py" />
+        <option value="$PROJECT_DIR$/test/test_client_server_net.py" />
       </list>
     </option>
   </component>
@@ -209,6 +257,12 @@
             <path>
               <item name="comp260-server" type="b2602c69:ProjectViewProjectNode" />
               <item name="comp260-server" type="462c0819:PsiDirectoryNode" />
+              <item name="shared" type="462c0819:PsiDirectoryNode" />
+              <item name="test" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="comp260-server" type="b2602c69:ProjectViewProjectNode" />
+              <item name="comp260-server" type="462c0819:PsiDirectoryNode" />
               <item name="test" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
@@ -219,7 +273,7 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="settings.editor.selected.configurable" value="preferences.fileTypes" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
@@ -282,13 +336,29 @@
       <option name="_new_targetType" value="&quot;PATH&quot;" />
       <method v="2" />
     </configuration>
+    <configuration name="Unittests in test_encryption_util.py" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+      <module name="comp260-server" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/shared/test" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;$PROJECT_DIR$/shared/test/test_encryption_util.py&quot;" />
+      <option name="_new_targetType" value="&quot;PATH&quot;" />
+      <method v="2" />
+    </configuration>
     <list>
       <item itemvalue="Python tests.Unittests in test_client_server_net.py" />
       <item itemvalue="Python.net_connection" />
+      <item itemvalue="Python tests.Unittests in test_encryption_util.py" />
     </list>
     <recent_temporary>
       <list>
         <item itemvalue="Python tests.Unittests in test_client_server_net.py" />
+        <item itemvalue="Python tests.Unittests in test_encryption_util.py" />
         <item itemvalue="Python.net_connection" />
       </list>
     </recent_temporary>
@@ -307,34 +377,34 @@
     <servers />
   </component>
   <component name="TestHistory">
-    <history-entry file="Unittests_in_test_client_server_net_py - 2019.06.24 at 11h 59m 19s.xml">
+    <history-entry file="Unittests_in_test_client_server_net_py - 2019.06.24 at 13h 02m 01s.xml">
       <configuration name="Unittests in test_client_server_net.py" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_in_test_client_server_net_py - 2019.06.24 at 12h 16m 19s.xml">
+    <history-entry file="Unittests_in_test_client_server_net_py - 2019.06.24 at 13h 02m 47s.xml">
       <configuration name="Unittests in test_client_server_net.py" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_in_test_client_server_net_py - 2019.06.24 at 12h 16m 55s.xml">
+    <history-entry file="Unittests_in_test_client_server_net_py - 2019.06.24 at 13h 03m 01s.xml">
       <configuration name="Unittests in test_client_server_net.py" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_in_test_client_server_net_py - 2019.06.24 at 12h 17m 57s.xml">
+    <history-entry file="Unittests_in_test_client_server_net_py - 2019.06.24 at 13h 03m 46s.xml">
       <configuration name="Unittests in test_client_server_net.py" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_in_test_client_server_net_py - 2019.06.24 at 12h 18m 09s.xml">
+    <history-entry file="Unittests_in_test_client_server_net_py - 2019.06.24 at 13h 04m 16s.xml">
       <configuration name="Unittests in test_client_server_net.py" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_in_test_client_server_net_py - 2019.06.24 at 12h 18m 49s.xml">
+    <history-entry file="Unittests_in_test_client_server_net_py - 2019.06.24 at 13h 05m 06s.xml">
       <configuration name="Unittests in test_client_server_net.py" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_in_test_client_server_net_py - 2019.06.24 at 12h 19m 38s.xml">
+    <history-entry file="Unittests_in_test_client_server_net_py - 2019.06.24 at 13h 05m 18s.xml">
       <configuration name="Unittests in test_client_server_net.py" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_in_test_client_server_net_py - 2019.06.24 at 12h 20m 05s.xml">
+    <history-entry file="Unittests_in_test_client_server_net_py - 2019.06.24 at 13h 05m 52s.xml">
       <configuration name="Unittests in test_client_server_net.py" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_in_test_client_server_net_py - 2019.06.24 at 12h 20m 51s.xml">
+    <history-entry file="Unittests_in_test_client_server_net_py - 2019.06.24 at 13h 06m 04s.xml">
       <configuration name="Unittests in test_client_server_net.py" configurationId="tests" />
     </history-entry>
-    <history-entry file="Unittests_in_test_client_server_net_py - 2019.06.24 at 12h 21m 52s.xml">
+    <history-entry file="Unittests_in_test_client_server_net_py - 2019.06.24 at 13h 06m 19s.xml">
       <configuration name="Unittests in test_client_server_net.py" configurationId="tests" />
     </history-entry>
   </component>
@@ -469,13 +539,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/requirements.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="34">
-          <caret line="2" column="12" lean-forward="true" selection-start-line="2" selection-start-column="12" selection-end-line="2" selection-end-column="12" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://C:/Program Files (x86)/Python36-32/Lib/threading.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="198">
@@ -483,43 +546,82 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/test/test_client_server_net.py">
+    <entry file="file://C:/Program Files (x86)/Python36-32/Lib/unittest/case.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="323">
-          <caret line="19" column="12" lean-forward="true" selection-start-line="19" selection-start-column="12" selection-end-line="19" selection-end-column="12" />
+        <state relative-caret-position="190">
+          <caret line="58" selection-start-line="58" selection-end-line="58" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Program Files (x86)/Python36-32/Lib/unittest/suite.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="198">
+          <caret line="162" selection-start-line="162" selection-end-line="162" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/Crypto/Util/Padding.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="190">
+          <caret line="63" selection-start-line="63" selection-end-line="63" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/requirements.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="34">
+          <caret line="2" column="17" lean-forward="true" selection-start-line="2" selection-start-column="17" selection-end-line="2" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shared/test/test_encryption_util.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="221">
+          <caret line="13" column="32" lean-forward="true" selection-start-line="13" selection-start-column="32" selection-end-line="13" selection-end-column="32" />
           <folding>
             <element signature="e#0#15#0" expanded="true" />
-            <marker date="1561371273024" expanded="true" signature="416:425" ph="..." />
+            <marker date="1561376776140" expanded="true" signature="147:197" ph="..." />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/shared/encryption_util.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="343">
-          <caret line="74" column="32" lean-forward="true" selection-start-line="74" selection-start-column="32" selection-end-line="74" selection-end-column="32" />
+        <state relative-caret-position="418">
+          <caret line="60" column="33" lean-forward="true" selection-start-line="60" selection-start-column="33" selection-end-line="60" selection-end-column="33" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/server/net_connection.py">
+    <entry file="file://$PROJECT_DIR$/client/net_connection.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="629">
-          <caret line="49" column="55" selection-start-line="49" selection-start-column="55" selection-end-line="49" selection-end-column="55" />
+        <state relative-caret-position="231">
+          <caret line="90" column="27" selection-start-line="90" selection-start-column="24" selection-end-line="90" selection-end-column="27" />
           <folding>
             <element signature="e#0#13#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/client/net_connection.py">
+    <entry file="file://$PROJECT_DIR$/server/net_connection.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="860">
-          <caret line="56" column="30" lean-forward="true" selection-start-line="56" selection-start-column="30" selection-end-line="56" selection-end-column="30" />
+        <state relative-caret-position="333">
+          <caret line="261" column="31" selection-start-line="261" selection-start-column="31" selection-end-line="261" selection-end-column="31" />
           <folding>
             <element signature="e#0#13#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/test/test_client_server_net.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="265">
+          <caret line="27" lean-forward="true" selection-start-line="27" selection-end-line="27" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+            <marker date="1561377975336" expanded="true" signature="416:425" ph="..." />
           </folding>
         </state>
       </provider>

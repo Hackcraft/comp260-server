@@ -42,7 +42,13 @@ class EncryptionUtil:
     def generateEncryptionKey(self):
         return get_random_bytes(16)
 
+    '''
+        Encrypts bytes with a key
+    '''
     def encrypt(self, key, data):
+        if not isinstance(data, bytes):
+            raise TypeError("Only accepts bytes")
+
         cipher = AES.new(key, AES.MODE_CBC)
         ct_bytes = cipher.encrypt(pad(data, AES.block_size))
 
@@ -51,6 +57,9 @@ class EncryptionUtil:
 
         return iv, ct
 
+    '''
+        Decrypts bytes with a key
+    '''
     def decrypt(self, key, iv, ct):
         iv = b64decode(iv)
         ct = b64decode(ct)
