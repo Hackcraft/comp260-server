@@ -1,5 +1,5 @@
 from .entity import Entity
-from .room import Room
+
 
 class SpawnedEntity(Entity):
 

@@ -25,7 +25,7 @@ class ClientConnection:
 
     def __init__(self, socket, index = 0):
         self.incoming_queue = Queue()
-        self.client_index = index
+        self.client_id = index
 
         # Create a public encryption key for use with the client
         self.encrypt_util = EncryptionUtil()
@@ -60,7 +60,7 @@ class ClientConnection:
                                 print("Error importing the public key sent by the client")
                                 return
                             else:
-                                print("Received public key: client %d" % self.client_index)
+                                print("Received public key: client %d" % self.client_id)
                                 self.state = self.WAITING_FOR_ENCRYPTION_KEY
 
                         elif self.state == self.WAITING_FOR_ENCRYPTION_KEY:
@@ -70,13 +70,13 @@ class ClientConnection:
                                 print(data)
                                 self.encryption_key = self.encrypt_util.decryptKey(self.server_private_key, data)
                             except:
-                                print("Error importing the aes key sent by client %s" % self.client_index)
+                                print("Error importing the aes key sent by client %s" % self.client_id)
                                 return
                             else:
-                                print("Received aes key: client %d" % self.client_index)
+                                print("Received aes key: client %d" % self.client_id)
                                 self.state = self.CONNECTED_SECURELY
 
-                                print("Connected to client %d securely!" % self.client_index)
+                                print("Connected to client %d securely!" % self.client_id)
 
 
                         elif self.state == self.CONNECTED_SECURELY:
@@ -180,7 +180,7 @@ class ClientConnection:
         if self.current_receive_thread is not None:
             self.current_receive_thread.join()
 
-        print("Closed client socket for client: " + str(self.client_index))
+        print("Closed client socket for client: " + str(self.client_id))
 
 
 
