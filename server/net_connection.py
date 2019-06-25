@@ -45,58 +45,58 @@ class ClientConnection:
         self._send(self.encrypt_util.exportPublicKey(self.server_public_key), False)
 
     def _receive_thread(self):
-        print("Server receiveThread running")
-
         while self.state >= self.CONNECTED:
             if self._socket_contains_valid_packet_id():
                 data = self._socket_get_data()
                 if data is not None:
 
-                    if self.state == self.WAITING_FOR_PUBLIC_KEY:
+                    with self.state_lock:
+                        if self.state == self.WAITING_FOR_PUBLIC_KEY:
 
-                        try:
-                            # Save the public key from the server
-                            self.client_public_key = self.encrypt_util.importPublicKey(data)
-                        except:
-                            print("Error importing the public key sent by the client")
-                            return
-                        else:
-                            with self.state_lock:
+                            try:
+                                # Save the public key from the server
+                                self.client_public_key = self.encrypt_util.importPublicKey(data)
+                            except:
+                                print("Error importing the public key sent by the client")
+                                return
+                            else:
+                                print("Received public key: client %d" % self.client_index)
                                 self.state = self.WAITING_FOR_ENCRYPTION_KEY
 
-                    elif self.state == self.WAITING_FOR_ENCRYPTION_KEY:
+                        elif self.state == self.WAITING_FOR_ENCRYPTION_KEY:
 
-                        try:
-                            # Save the public key from the server
-                            self.encryption_key = self.encrypt_util.decryptKey(self.server_private_key, data)
-                        except:
-                            print("Error importing the aes key sent by the client")
-                            return
-                        else:
-                            with self.state_lock:
+                            try:
+                                # Save the public key from the server
+                                print(data)
+                                self.encryption_key = self.encrypt_util.decryptKey(self.server_private_key, data)
+                            except:
+                                print("Error importing the aes key sent by client %s" % self.client_index)
+                                return
+                            else:
+                                print("Received aes key: client %d" % self.client_index)
                                 self.state = self.CONNECTED_SECURELY
 
-                            print("Connected to client %d securely!" % self.client_index)
+                                print("Connected to client %d securely!" % self.client_index)
 
 
-                    elif self.state == self.CONNECTED_SECURELY:
-                        arr = json.loads(data)
+                        elif self.state == self.CONNECTED_SECURELY:
+                            arr = json.loads(data)
 
-                        if 'si' in arr and self._is_valid_sequence_id(arr['si']):
-                            try:
-                                iv = arr['iv'] #self.encrypt_util.decryptKey(self.server_private_key, arr['iv'])
-                                ct = arr['ct'] #self.encrypt_util.decrypt(self.encryption_key, iv, arr['ct'])
+                            if 'si' in arr and self._is_valid_sequence_id(arr['si']):
+                                try:
+                                    iv = arr['iv'] #self.encrypt_util.decryptKey(self.server_private_key, arr['iv'])
+                                    ct = arr['ct'] #self.encrypt_util.decrypt(self.encryption_key, iv, arr['ct'])
 
-                                msg_encoded = self.encrypt_util.decrypt(self.encryption_key, iv, ct)
-                                msg = msg_encoded.decode(self.CHAR_TYPE)
-                            except:
-                                print("Error decrypting message from client")
-                                pass
-                            else:
-                                self.incoming_queue.put(msg)
+                                    msg_encoded = self.encrypt_util.decrypt(self.encryption_key, iv, ct)
+                                    msg = msg_encoded.decode(self.CHAR_TYPE)
+                                except:
+                                    print("Error decrypting message from client")
+                                    pass
+                                else:
+                                    self.incoming_queue.put(msg)
 
-                    else:
-                        print("Unexpected state passed to receiver, state: " + str(self.state))
+                        else:
+                            print("Unexpected state passed to receiver, state: " + str(self.state))
 
     '''
         Send to client with the option of encryption
@@ -106,16 +106,17 @@ class ClientConnection:
             self._send(data, encrypt)
 
     def _send(self, data, encrypt=True):
-        if not isinstance(data, str):
-            raise ValueError("send only accepts strings!")
+        with self.state_lock:
+            if not isinstance(data, str):
+                raise ValueError("send only accepts strings!")
 
-        if encrypt:
-            iv, ct = self.encrypt_util.encrypt(self.encryption_key, data)
-            result = json.dumps({'iv': iv, 'ct': ct, 'si': str(1)})
-            data = result
+            if encrypt:
+                iv, ct = self.encrypt_util.encrypt(self.encryption_key, data.encode(self.CHAR_TYPE))
+                result = json.dumps({'iv': iv, 'ct': ct, 'si': str(1)})
+                data = result
 
-        self._send_header()
-        self._send_data(data.encode(self.CHAR_TYPE))
+            self._send_header()
+            self._send_data(data.encode(self.CHAR_TYPE))
 
     def _send_header(self):
         try:
@@ -287,8 +288,8 @@ class NetConnection:
     def send(self, client_id, data):
         try:
             self.clients[client_id].send(data)
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
 
     def recv(self):

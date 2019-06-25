@@ -100,7 +100,10 @@ class EncryptionUtil:
         try:
             key = load_pem_public_key(data.encode(self.CHAR_TYPE), backend=default_backend())
         except ValueError as error:
+            print("key data: ")
+            print(data)
             print(error)
+            raise Exception(error)
             return None
         else:
             if isinstance(key, rsa.RSAPublicKey):

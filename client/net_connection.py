@@ -55,8 +55,6 @@ class NetConnection:
         self.current_receive_thread.start()
 
     def _receive_thread(self):
-        print("Client receiveThread running")
-
         while self.state >= self.CONNECTED:
             if self._socket_contains_valid_packet_id():
                 data = self._socket_get_data()
@@ -88,9 +86,8 @@ class NetConnection:
 
                     # Ready to process messages
                     elif self.state == self.CONNECTED_SECURELY:
-                        arr = json.loads(data)
-
                         try:
+                            arr = json.loads(data)
                             msg_encoded = self.encrypt_util.decrypt(self.encryption_key, arr['iv'], arr["ct"])
                             msg = msg_encoded.decode(self.CHAR_TYPE)
                         except Exception as e:
@@ -151,20 +148,24 @@ class NetConnection:
             Without encryption - data is expected to already be in bytes
     '''
     def send(self, data, encrypt=True):
-        if not isinstance(data, str):
-            raise ValueError("send only accepts strings!")
+        with self.state_lock:
+            if not isinstance(data, str):
+                raise ValueError("send only accepts strings!")
 
-        if encrypt:
-            iv, ct = self.encrypt_util.encrypt(self.encryption_key, data.encode(self.CHAR_TYPE))
-            result = json.dumps({'iv': iv, 'ct': ct, 'si': str(1)})
-            data = result
+            if encrypt:
+                print("Encrypting: ")
+                print(data)
 
-        self._send_header()
-        self._send_data(data.encode(self.CHAR_TYPE))
+            if encrypt:
+                iv, ct = self.encrypt_util.encrypt(self.encryption_key, data.encode(self.CHAR_TYPE))
+                result = json.dumps({'iv': iv, 'ct': ct, 'si': str(1)})
+                data = result
+
+            self._send_header()
+            self._send_data(data.encode(self.CHAR_TYPE))
 
     def _send_header(self):
         try:
-            print(self.PACKET_ID.encode(self.CHAR_TYPE))
             self.server_socket.send(self.PACKET_ID.encode(self.CHAR_TYPE))
         except socket.error:
             pass  # TODO _lost_server
