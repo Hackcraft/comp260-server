@@ -3,6 +3,7 @@ import time
 from client.net_connection import NetConnection as CLConnection
 from server.net_connection import NetConnection as SVConnection
 
+
 class TestClientServerConnection(unittest.TestCase):
 
 
@@ -29,7 +30,7 @@ class TestClientServerConnection(unittest.TestCase):
         self.cl.send("This is third test")
 
         tmp_clients = []
-        tmp_count = 50
+        tmp_count = 5
 
         for i in range(tmp_count):
             tmp_clients.append(CLConnection(self.IP, self.PORT))

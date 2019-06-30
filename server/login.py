@@ -37,6 +37,6 @@ class Login(GameState):
                 return self.user_names[player_id]
 
     def update(self, player_id, message):
-
+        pass
 
 

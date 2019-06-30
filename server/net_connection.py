@@ -12,7 +12,9 @@ import shared.commands as commands
 '''
     Handles the connection to the client
 '''
-class ClientConnection:
+
+
+class _ClientConnection:
 
     NO_CONNECTION = 0
     CONNECTED = 1
@@ -240,7 +242,7 @@ class NetConnection:
 
             # New connection
             try:
-                client = ClientConnection(clientSocket, client_id)
+                client = _ClientConnection(clientSocket, client_id)
             except:
                 print("Failed to accept client")
             else:
