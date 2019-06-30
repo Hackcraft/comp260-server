@@ -1,0 +1,30 @@
+_pos
+_addplayer
+
+before accepting clients - setup map
+
+STATE_LOADING_PLAYER_DATA ??
+
+
+
+
+Mina loop:
+	Get net disconnects
+	Get net connects
+
+	for each disconnection:
+		player.connected = false
+
+	for each connection:
+		login add
+
+	Login update (check still connected)
+
+	for each successful login:
+		Load player data
+		game add
+	
+	Game update (check still connected)
+
+	
+		
