@@ -72,3 +72,7 @@ fabric.properties
 /server/test/__pycache__/*.pyc
 /shared/test/__pycache__/*.pyc
 venv
+/.idea/comp260-server-take-3.iml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/vcs.xml

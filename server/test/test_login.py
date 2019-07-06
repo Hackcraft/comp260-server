@@ -1,6 +1,6 @@
 import unittest
 import sqlite3
-from login import Login
+from server.login import Login
 
 '''
 class TestLogin(unittest.TestCase):
@@ -37,5 +37,4 @@ class TestLoginDatabase(unittest.TestCase):
         self.login.create_account(self.username, self.salted_password, self.salt)
 
     def test_account_creation(self):
-        print("hi")
         assert self.login.username_exists(self.username)

@@ -1,4 +1,4 @@
-from game_state import GameState
+from server.game_state import GameState
 import threading
 import sqlite3
 import hashlib
@@ -30,14 +30,14 @@ class Login(GameState):
     def _setup_tables(self):
         try:
             self.cursor.execute(
-                '''create table ? (
+                '''create table %s (
                 username varchar(20),
                 salted_password varchar(20),
-                salt varchar(20))''',
-                self.LOGIN_TABLE
+                salt varchar(20))''' % self.LOGIN_TABLE
             )
-        except:
+        except Exception as e:
             print("Failed to create %s table" % self.LOGIN_TABLE)
+            print(e)
 
     def join(self, player_id):
         super().join(player_id)
@@ -115,13 +115,13 @@ class Login(GameState):
 
     def create_account(self, username, salted_password, salt):
         self.cursor.execute(
-            'insert into ?(username, salted_password, salt) values(?,?,?)',
-            (self.LOGIN_TABLE, username, salted_password, salt)
+            'insert into %s(username, salted_password, salt) values(?,?,?)' % self.LOGIN_TABLE,
+            (username, salted_password, salt)
         )
         self.database.commit()
 
     def _user_login_data(self, username):
-        self.cursor.execute('select * from ? where username = ?', (self.LOGIN_TABLE, username))
+        self.cursor.execute('select * from %s where username = ?' % self.LOGIN_TABLE, [username])
         rows = self.cursor.fetchall()
         return len(rows) >= 1 and rows[0] or None
 
@@ -143,7 +143,7 @@ class Login(GameState):
 
     @staticmethod
     def salt_password(salt, password):
-        hashlib.sha512(password + salt).hexdigest()
+        hashlib.sha512(password.encode() + salt.encode()).hexdigest()
 
 
 
