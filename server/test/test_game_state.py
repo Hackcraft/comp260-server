@@ -1,6 +1,6 @@
 import unittest
 import random
-from game_state import GameState
+from server.game_state import GameState
 
 class TestGameState(unittest.TestCase):
 
@@ -38,6 +38,11 @@ class TestGameState(unittest.TestCase):
 
         for i in range(0, 20):
             assert self.game_state.contains_player(i)
+
+    def test_out_of_order_join(self):
+        self.game_state.join(5)
+        self.game_state.join(50)
+        self.game_state.join(500)
 
     def test_multiple_leave(self):
         for i in range(0, 20):

@@ -14,13 +14,13 @@ class Login(GameState):
         self.database = db
         self.cursor = db.cursor()
 
-        self.verified = []
+        self.verified = {}
         self.verified_lock = threading.Lock()
 
-        self.user_names = []
+        self.user_names = {}
         self.user_names_lock = threading.Lock()
 
-        self.salts = []
+        self.salts = {}
         self.salts_lock = threading.Lock()
 
         self.output_queue = Queue()  # (player_id, msg)
@@ -43,6 +43,7 @@ class Login(GameState):
         super().join(player_id)
 
     def leave(self, player_id):
+        player_id = str(player_id)
         super().leave(player_id)
         # Remove salt
         with self.salts_lock:
@@ -58,10 +59,12 @@ class Login(GameState):
                 del self.user_names[player_id]
 
     def is_verified(self, player_id):
+        player_id = str(player_id)
         with self.verified_lock:
             return player_id in self.verified
 
     def selected_username(self, player_id):
+        player_id = str(player_id)
         # If verified - pass the username which was verified
         if self.is_verified(player_id):
             with self.verified_lock:
@@ -72,6 +75,7 @@ class Login(GameState):
                     return self.user_names[player_id]
 
     def update(self, player_id, message):
+        player_id = str(player_id)
         # Verified users should't be sending messages here
         with self.verified_lock:
             if player_id in self.verified:
@@ -123,7 +127,13 @@ class Login(GameState):
     def _user_login_data(self, username):
         self.cursor.execute('select * from %s where username = ?' % self.LOGIN_TABLE, [username])
         rows = self.cursor.fetchall()
-        return len(rows) >= 1 and rows[0] or None
+        if len(rows) >= 1:
+            data = {}
+            data['username'] = rows[0][0]
+            data['salted_password'] = rows[0][1]
+            data['salt'] = rows[0][2]
+            return data
+        return None
 
     def username_exists(self, username):
         data = self._user_login_data(username)
