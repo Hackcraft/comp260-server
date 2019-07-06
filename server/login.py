@@ -2,12 +2,16 @@ from game_state import GameState
 import threading
 import sqlite3
 import hashlib
+import uuid
+from queue import Queue
 
 class Login(GameState):
 
+    LOGIN_TABLE = "logins"
+
     def __init__(self, db):
         super().__init__()
-        self.db = db
+        self.database = db
         self.cursor = db.cursor()
 
         self.verified = []
@@ -18,6 +22,22 @@ class Login(GameState):
 
         self.salts = []
         self.salts_lock = threading.Lock()
+
+        self.output_queue = Queue()  # (player_id, msg)
+
+        self._setup_tables()
+
+    def _setup_tables(self):
+        try:
+            self.cursor.execute(
+                '''create table ? (
+                username varchar(20),
+                salted_password varchar(20),
+                salt varchar(20))''',
+                self.LOGIN_TABLE
+            )
+        except:
+            print("Failed to create %s table" % self.LOGIN_TABLE)
 
     def join(self, player_id):
         super().join(player_id)
@@ -67,11 +87,12 @@ class Login(GameState):
                 if self.username_exists(message):
                     with self.salts_lock:
                         self.salts = self.user_salt(username)
+                        self.output_queue.put((player_id, self.salts[player_id]))
                 # Or generate a temporary one
                 else:
                     with self.salts_lock:
                         self.salts[player_id] = self.generate_salt()
-                # TODO Send salt to user
+                        self.output_queue.put((player_id, self.salts[player_id]))
                 return # Set username - wait for next call for password
 
         username = self.selected_username(player_id)
@@ -82,6 +103,8 @@ class Login(GameState):
             if self.password_correct(username, saltedPassword):
                 with self.verified_lock:
                     self.verified[player_id] = username
+            else:
+                self.output_queue.put(player_id, "bad password")
 
         # Create a new account
         else:
@@ -90,20 +113,37 @@ class Login(GameState):
                 self.verified[player_id] = username
 
 
-    def create_account(self, username, saltedPassword, salt):
-        pass # TODO sql
+    def create_account(self, username, salted_password, salt):
+        self.cursor.execute(
+            'insert into ?(username, salted_password, salt) values(?,?,?)',
+            (self.LOGIN_TABLE, username, salted_password, salt)
+        )
+        self.database.commit()
+
+    def _user_login_data(self, username):
+        self.cursor.execute('select * from ? where username = ?', (self.LOGIN_TABLE, username))
+        rows = self.cursor.fetchall()
+        return len(rows) >= 1 and rows[0] or None
 
     def username_exists(self, username):
-        return True # TODO implinent sql call
+        data = self._user_login_data(username)
+        return data is not None
 
-    def password_correct(self, username, saltedPassword):
-        return True # TODO impliment SQL call
+    def password_correct(self, username, salted_password):
+        data = self._user_login_data(username)
+        return data is not None and data['salted_password'] == salted_password or False
 
     def user_salt(self, username):
-        return "" # TODO impliment sql call
+        data = self._user_login_data(username)
+        return data is not None and data['salt'] or None
 
-    def generate_salt(self):
-        return "" # TODO impliment salt
+    @staticmethod
+    def generate_salt(): # https://stackoverflow.com/a/9595108
+        return uuid.uuid4().hex
+
+    @staticmethod
+    def salt_password(salt, password):
+        hashlib.sha512(password + salt).hexdigest()
 
 
 
