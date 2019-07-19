@@ -24,6 +24,7 @@ class Login(GameState):
         self.salts_lock = threading.Lock()
 
         self.output_queue = Queue()  # (player_id, msg)
+        self.verified_queue = Queue()
 
         self._setup_tables()
 
@@ -115,7 +116,7 @@ class Login(GameState):
             self.create_account(username, saltedPassword, self.salts[player_id])
             with self.verified_lock:
                 self.verified[player_id] = username
-
+            self.verified_queue.put(player_id)
 
     def create_account(self, username, salted_password, salt):
         self.cursor.execute(

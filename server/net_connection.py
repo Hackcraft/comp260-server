@@ -299,6 +299,8 @@ class NetConnection:
             (client, msg) = self.message_queue.get()
             return (client, msg)
 
+    def is_pending_recv(self):
+        return self.message_queue.qsize() > 0
 
     # Check for disconnected clients
 
