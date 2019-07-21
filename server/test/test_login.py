@@ -1,6 +1,7 @@
 import unittest
 import sqlite3
 from server.login import Login
+from server.player import Player
 
 class TestLoginDatabase(unittest.TestCase):
 
@@ -27,19 +28,19 @@ class TestLoginDatabase(unittest.TestCase):
         assert self.login.user_salt(self.username) == self.salt
 
     def test_update_to_login(self):
-        player_id = 1
+        player = Player(1)
         player_name = "TestMe"
-        self.login.join(player_id)
+        self.login.join(player)
 
         # First is username
-        self.login.update(player_id, player_name)
+        self.login.update(player, player_name)
 
         # Second is password - no account TestMe so will create new
-        self.login.update(player_id, self.salted_password)
+        self.login.update(player, self.salted_password)
 
         # Verify the user was created
         assert self.login.user_salt(player_name) is not None
         assert self.login.username_exists(player_name)
 
         # Verify the user is verified
-        assert self.login.is_verified(player_id)
+        assert player.login_verified

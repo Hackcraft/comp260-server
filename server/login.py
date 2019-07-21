@@ -5,6 +5,8 @@ import hashlib
 import uuid
 from queue import Queue
 
+from server.player import Player
+
 class Login(GameState):
 
     LOGIN_TABLE = "logins"
@@ -13,15 +15,6 @@ class Login(GameState):
         super().__init__()
         self.database = db
         self.cursor = db.cursor()
-
-        self.verified = {}
-        self.verified_lock = threading.Lock()
-
-        self.user_names = {}
-        self.user_names_lock = threading.Lock()
-
-        self.salts = {}
-        self.salts_lock = threading.Lock()
 
         self.output_queue = Queue()  # (player_id, msg)
         self.verified_queue = Queue()
@@ -40,83 +33,51 @@ class Login(GameState):
             print("Failed to create %s table" % self.LOGIN_TABLE)
             print(e)
 
-    def join(self, player_id):
-        super().join(player_id)
+    def join(self, player: Player):
+        super().join(player)
 
-    def leave(self, player_id):
-        player_id = str(player_id)
-        super().leave(player_id)
-        # Remove salt
-        with self.salts_lock:
-            if player_id in self.salts_lock:
-                del self.salts_lock[player_id]
-        # Remove from verified
-        with self.verified_lock:
-            if player_id in self.verified:
-                self.verified.remove(player_id)
-        # Remove selected username
-        with self.user_names_lock:
-            if player_id in self.user_names:
-                del self.user_names[player_id]
+    def leave(self, player: Player):
+        super().leave(player)
 
-    def is_verified(self, player_id):
-        player_id = str(player_id)
-        with self.verified_lock:
-            return player_id in self.verified
-
-    def selected_username(self, player_id):
-        player_id = str(player_id)
-        # If verified - pass the username which was verified
-        if self.is_verified(player_id):
-            with self.verified_lock:
-                return self.verified[player_id]
-        else:
-            with self.user_names_lock:
-                if player_id in self.user_names:
-                    return self.user_names[player_id]
-
-    def update(self, player_id, message):
-        player_id = str(player_id)
+    # Update is not thread safe
+    def update(self, player: Player, message):
         # Verified users should't be sending messages here
-        with self.verified_lock:
-            if player_id in self.verified:
-                return
+        if player.login_verified:
+            return
 
         username = message
 
-        # Set username first
-        with self.user_names_lock:
-            if player_id not in self.user_names:
-                self.user_names[player_id] = username
-                # Load the salt for the user if one is found
-                if self.username_exists(message):
-                    with self.salts_lock:
-                        self.salts = self.user_salt(username)
-                        self.output_queue.put((player_id, self.salts[player_id]))
-                # Or generate a temporary one
-                else:
-                    with self.salts_lock:
-                        self.salts[player_id] = self.generate_salt()
-                        self.output_queue.put((player_id, self.salts[player_id]))
-                return # Set username - wait for next call for password
+        # TODO check if user is already logged in
 
-        username = self.selected_username(player_id)
+        # Set username first
+        if player.username is None:
+            player.username = username
+            # Load the salt for the user if one is found
+            if self.username_exists(message):
+                player.salt = self.user_salt(username)
+                self.output_queue.put((player, player.salt))
+            # Or generate a temporary one
+            else:
+                player.salt = self.generate_salt()
+                self.output_queue.put((player, player.salt))
+            return # Set username - wait for next call for password
+
+        # Otherwise - try password
+        username = player.username
         saltedPassword = message
 
         # Log into existing account
         if self.username_exists(username):
             if self.password_correct(username, saltedPassword):
-                with self.verified_lock:
-                    self.verified[player_id] = username
+                player.login_verified = True
             else:
-                self.output_queue.put(player_id, "bad password")
+                self.output_queue.put(player, "bad password - try again!")
 
         # Create a new account
         else:
-            self.create_account(username, saltedPassword, self.salts[player_id])
-            with self.verified_lock:
-                self.verified[player_id] = username
-            self.verified_queue.put(player_id)
+            self.create_account(username, saltedPassword, player.salt)
+            player.login_verified = True
+            self.verified_queue.put(player)
 
     def create_account(self, username, salted_password, salt):
         self.cursor.execute(

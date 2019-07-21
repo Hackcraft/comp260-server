@@ -188,8 +188,6 @@ class _ClientConnection:
 
 '''
     Handles the connection/binding to the ip, port
-    
-    Observer for connects and disconnects?
 '''
 class NetConnection:
 
@@ -233,7 +231,7 @@ class NetConnection:
             try:
                 (clientSocket, address) = self.server_socket.accept()
             except:
-                pass
+                return
 
             # New index
             with self.client_index_lock:

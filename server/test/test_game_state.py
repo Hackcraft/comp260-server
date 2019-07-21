@@ -1,13 +1,14 @@
 import unittest
 import random
 from server.game_state import GameState
+from server.player import Player
 
 class TestGameState(unittest.TestCase):
 
     @classmethod
     def setUp(self):
         self.game_state = GameState()
-        self.player_id = random.randrange(255)
+        self.player_id = Player(random.randrange(255))
 
     # Single join/leave
     def test_single_join(self):
@@ -34,22 +35,22 @@ class TestGameState(unittest.TestCase):
     # Multiple join/leave
     def test_multiple_join(self):
         for i in range(0, 20):
-            self.game_state.join(i)
+            self.game_state.join(Player(i))
 
         for i in range(0, 20):
-            assert self.game_state.contains_player(i)
+            assert self.game_state.contains_player(Player(i))
 
     def test_out_of_order_join(self):
-        self.game_state.join(5)
-        self.game_state.join(50)
-        self.game_state.join(500)
+        self.game_state.join(Player(5))
+        self.game_state.join(Player(50))
+        self.game_state.join(Player(500))
 
     def test_multiple_leave(self):
         for i in range(0, 20):
-            self.game_state.join(i)
+            self.game_state.join(Player(i))
 
         for i in range(0, 20):
-            self.game_state.leave(i)
+            self.game_state.leave(Player(i))
 
         for i in range(0, 20):
-            assert not self.game_state.contains_player(i)
+            assert not self.game_state.contains_player(Player(i))

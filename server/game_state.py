@@ -1,4 +1,5 @@
 import threading
+from server.player import Player
 
 class GameState:
 
@@ -6,22 +7,21 @@ class GameState:
         self.players_lock = threading.Lock()
         self.players = {}
 
-    def join(self, player_id):
-        player_id = str(player_id)
-        with self.players_lock:
-            if player_id not in self.players:
-                self.players[player_id] = True
+    def join(self, player: Player):
+        if isinstance(player, Player):
+            with self.players_lock:
+                if player not in self.players:
+                    self.players[player] = player
 
-    def leave(self, player_id):
-        player_id = str(player_id)
-        with self.players_lock:
-            if player_id in self.players:
-                del self.players[player_id]
+    def leave(self, player: Player):
+        if isinstance(player, Player):
+            with self.players_lock:
+                if player in self.players:
+                    del self.players[player]
 
-    def contains_player(self, player_id):
-        player_id = str(player_id)
+    def contains_player(self, player: Player):
         with self.players_lock:
-            if player_id in self.players:
+            if player in self.players:
                 return True
             return False
 
