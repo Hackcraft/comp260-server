@@ -17,44 +17,6 @@ from server.player import Player
 # Credits: https://stackoverflow.com/a/19655992 (although modified a fair bit now)
 
 #
-#   Convert from temporary connection indexes to persistent player ids and back
-#
-class IdToIndexLinker:
-
-    def __init__(self):
-        self.id_to_index = {}
-        self.index_to_id = {}
-
-    def id_from_index(self, index):
-        return self.index_to_id.get(index, None)
-
-    def index_from_id(self, id):
-        return self.id_to_index.get(id, None)
-
-    def index_has_id(self, index):
-        return self.id_from_index(index) is not None
-
-    def id_has_index(self, id):
-        return self.index_from_id(id) is not None
-
-    def link_id_to_index(self, id, index):
-        self.link_index_to_id(index, id)
-
-    def link_index_to_id(self, index, id):
-        self.id_to_index[id] = index
-        self.index_to_id[index] = id
-
-    def remove_link(self, index = None, id = None):
-        if index is not None:
-            id = self.id_from_index(index)
-            self.id_to_index.pop(id, None)
-            self.index_to_id.pop(index, None)
-        elif id is not None:
-            index = self.index_from_id(id)
-            self.id_to_index.pop(id, None)
-            self.index_to_id.pop(index, None)
-
-#
 #   Console input handling
 #
 def addInput(inputQueue):
@@ -67,12 +29,13 @@ def bindInputToQueue(inputQueue):
     inputThread.daemon = True
     inputThread.start()
 
+#
+#   Main thread
+#
 if __name__ == '__main__':
     errorMsg = ""
-    players = {}
+    players = {}    # connection_id = player
     shouldRun = True
-
-    id_linker = IdToIndexLinker()
 
     # Try and connect to a socket
     try:
@@ -96,11 +59,11 @@ if __name__ == '__main__':
 
     # If there's an error - stop server - wait to close TODO Test that it actually works
     if len(errorMsg) > 0:
+        shouldRun = False
         print(errorMsg)
         print("Press any key to close.")
         inp = input()
         sys.exit(-1)
-        shouldRun = False
 
     # Handle input in separate thread
     inputQueue = Queue()
@@ -131,13 +94,44 @@ if __name__ == '__main__':
                 login_state.leave(ply)
                 play_state.join(ply)
 
-            # Check for disconnections
-
+            # Fetch lost net connections
+            # flag and remove them from game states
+            connections_to_remove = Queue()
+            while net.disconnects.qsize() > 0:
+                ply = net.disconnects.get()
+                connection_id = ply.connection_id
+                ply.connection_id = None
+                login_state.leave(ply)
+                play_state.leave(ply)
+                players.pop(connection_id, None)
+                print("Removed connection id: %s" % connection_id)
 
             # Update from client messages
             while net.is_pending_recv():
-                client, msg = net.recv()
+                connection_id, msg = net.recv()
 
+                # If they disconnected - skip pending messages
+                if connection_id not in players:
+                    continue
+
+                ply = players[connection_id]
+
+                # Not verified - pass messages to Login
+                if not ply.login_verified:
+                    login_state.update(ply, msg)
+
+                # They are verified - pass messages to Play
+                else:
+                    play_state.update(ply, msg)
+
+            # Finally send the output from the Login state
+            while login_state.output_queue.qsize() > 0:
+                ply, msg = login_state.output_queue.get()
+                net.send(ply.connection_id, msg.encode("utf-8"))
+            # And the Play state
+            while play_state.output_queue.qsize() > 0:
+                ply, msg = play_state.output_queue.get()
+                net.send(ply.connection_id, msg.encode("utf-8"))
 
 
         except KeyboardInterrupt:

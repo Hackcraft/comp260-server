@@ -15,6 +15,12 @@ class Player:
     def get_name(self):
         return self.username
 
+    def is_connected(self):
+        return self.connection_id is not None
+
+    def is_valid(self):
+        return self.is_connected() and self.login_verified
+
     def __key(self):
         return self.player_id
 

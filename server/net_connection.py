@@ -107,7 +107,7 @@ class _ClientConnection:
         if self.state == self.CONNECTED_SECURELY:
             self._send(data, encrypt)
 
-    def _send(self, data, encrypt=True):
+    def _send(self, data: str, encrypt=True):
         with self.state_lock:
             if not isinstance(data, str):
                 raise ValueError("send only accepts strings!")

@@ -25,5 +25,5 @@ class GameState:
                 return True
             return False
 
-    def update(self, player_id, message):
+    def update(self, player: Player, message):
         pass

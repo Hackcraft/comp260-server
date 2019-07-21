@@ -16,7 +16,7 @@ class Login(GameState):
         self.database = db
         self.cursor = db.cursor()
 
-        self.output_queue = Queue()  # (player_id, msg)
+        self.output_queue = Queue()  # (player, msg)
         self.verified_queue = Queue()
 
         self._setup_tables()
