@@ -6,10 +6,9 @@ class DataTags(Enum):
     CLEAR = auto()  # Clear the screen of the client
     WRITE = auto()  # Write a message to the screen of the client
 
-    # Server actions
-    MOVE = auto()   # Move the player to a new position
-    LOCAL_CHAT = auto()  # Write a message to everyone in the current room
+    # Client msg processing is all done server side so the client will
+    # send direct output from their game with no processing
 
 
 
-print(DataTags(3).name)
+#print(DataTags(3).name)
