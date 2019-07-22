@@ -1,7 +1,7 @@
 import unittest
 import sqlite3
-from server.login import Login
-from server.player import Player
+
+from server import Login, Player
 
 class TestLoginDatabase(unittest.TestCase):
 

@@ -5,7 +5,7 @@ import json
 from queue import *
 from base64 import *
 
-from shared.encryption_util import EncryptionUtil
+from client import EncryptionUtil
 
 
 '''

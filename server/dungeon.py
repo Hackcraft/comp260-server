@@ -1,6 +1,6 @@
 import math
 
-from server.room import *
+from server import Room, Vector2
 
 '''
     A map class of rooms

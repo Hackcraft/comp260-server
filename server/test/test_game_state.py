@@ -1,7 +1,7 @@
 import unittest
 import random
-from server.game_state import GameState
-from server.player import Player
+
+from server import GameState, Player
 
 class TestGameState(unittest.TestCase):
 

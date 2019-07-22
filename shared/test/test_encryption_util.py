@@ -1,5 +1,5 @@
 import unittest
-from encryption_util import EncryptionUtil
+from shared import EncryptionUtil
 
 class TestEncryptionUtil(unittest.TestCase):
 

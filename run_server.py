@@ -7,11 +7,7 @@ import sqlite3
 import threading
 from queue import Queue
 
-from server.net_connection import NetConnection
-from server.login import Login
-from server.play import Play
-from server.net_connection import NetConnection
-from server.player import Player
+from server import *
 
 # Terminal threaded input (so it can other stuff whilst waiting for input)
 # Credits: https://stackoverflow.com/a/19655992 (although modified a fair bit now)

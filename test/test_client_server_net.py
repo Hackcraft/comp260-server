@@ -1,7 +1,8 @@
 import unittest
 import time
-from client.net_connection import NetConnection as CLConnection
-from server.net_connection import NetConnection as SVConnection
+
+from client import NetConnection as CLConnection
+from server import NetConnection as SVConnection
 
 
 class TestClientServerConnection(unittest.TestCase):

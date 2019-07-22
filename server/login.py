@@ -1,11 +1,10 @@
-from server.game_state import GameState
 import threading
 import sqlite3
 import hashlib
 import uuid
 from queue import Queue
 
-from server.player import Player
+from server import Player, GameState
 
 class Login(GameState):
 

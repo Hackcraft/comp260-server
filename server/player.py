@@ -1,4 +1,4 @@
-from shared.vector2 import Vector2
+from server import Vector2
 
 class Player:
 

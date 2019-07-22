@@ -1,5 +1,6 @@
 import threading
-from server.player import Player
+
+from server import Player
 
 class GameState:
 

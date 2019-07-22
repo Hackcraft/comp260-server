@@ -6,8 +6,8 @@ import time
 from queue import *
 from base64 import *
 
-from shared.encryption_util import EncryptionUtil
-import shared.commands as commands
+from server import EncryptionUtil
+
 
 '''
     Handles the connection to the client

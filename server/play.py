@@ -1,10 +1,4 @@
-from server.game_state import GameState
-from server.player import Player
-from server.player_persistence import PlayerPersistence
-from server.dungeon import Dungeon
-
-from shared.vector2 import Vector2
-from shared.data_tags import DataTags
+from server import GameState, Player, PlayerPersistence, Dungeon, Vector2, DataTags
 
 from queue import Queue
 import json
