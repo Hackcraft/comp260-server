@@ -1,13 +1,12 @@
 import unittest
 import sqlite3
 
-from server import Login, Player
+from server import Login, Player, DataPacket, LoginTags
 
 class TestLoginDatabase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        print("help")
         cls.username = "Test_username"
         cls.salt = Login.generate_salt()
         cls.salted_password = Login.salt_password(cls.salt, "password")
@@ -33,10 +32,10 @@ class TestLoginDatabase(unittest.TestCase):
         self.login.join(player)
 
         # First is username
-        self.login.update(player, player_name)
+        self.login.update(player, DataPacket.combine(LoginTags.CHECK_USERNAME, player_name))
 
         # Second is password - no account TestMe so will create new
-        self.login.update(player, self.salted_password)
+        self.login.update(player, DataPacket.combine(LoginTags.CHECK_PASSWORD, self.salted_password))
 
         # Verify the user was created
         assert self.login.user_salt(player_name) is not None

@@ -1,7 +1,6 @@
-from server import GameState, Player, PlayerPersistence, Dungeon, Vector2, DataTags
+from server import GameState, Player, PlayerPersistence, Dungeon, Vector2, DataTags, DataPacket
 
 from queue import Queue
-import json
 
 class Play(GameState):
 
@@ -20,7 +19,7 @@ class Play(GameState):
         self.move(player, player.pos)
 
     def send(self, player, tag, msg="none"):
-        self.output_queue.put((player, json.dumps({"tag": tag, "msg": msg})))
+        self.output_queue.put((player, DataPacket.combine(tag, msg)))
 
     def welcome_message(self, player: Player):
         msg = "Welcome to the Dungeon!"

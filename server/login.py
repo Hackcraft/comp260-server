@@ -2,9 +2,10 @@ import threading
 import sqlite3
 import hashlib
 import uuid
+import json
 from queue import Queue
 
-from server import Player, GameState
+from server import Player, GameState, DataPacket, LoginTags
 
 class Login(GameState):
 
@@ -34,43 +35,53 @@ class Login(GameState):
 
     def join(self, player: Player):
         super().join(player)
+        self.send(player, LoginTags.ENTER_USERNAME)  # When they join - request username
 
     def leave(self, player: Player):
         super().leave(player)
 
+    def send(self, player, tag, msg="none"):
+        self.output_queue.put((player, DataPacket.combine(tag, msg)))
+
     # Update is not thread safe
-    def update(self, player: Player, message):
+    def update(self, player: Player, data_packet: DataPacket):
         # Verified users should't be sending messages here
         if player.login_verified:
             return
 
-        username = message
+        tag, data = DataPacket.separate(data_packet)
 
+        if tag is LoginTags.CHECK_USERNAME:
+            self.check_username(player, data)
+        elif tag is LoginTags.CHECK_PASSWORD:
+            self.check_password(player, data)
+        else:
+            print("Login | Unidentified tag: %s" % tag)
+
+
+    def check_username(self, player: Player, username: str):
         # TODO check if user is already logged in
-
         # Set username first
         if player.username is None:
             player.username = username
-            # Load the salt for the user if one is found
-            if self.username_exists(message):
+            # Load user's salt or create one
+            if self.username_exists(username):
                 player.salt = self.user_salt(username)
-                self.output_queue.put((player, player.salt))
-            # Or generate a temporary one
             else:
                 player.salt = self.generate_salt()
-                self.output_queue.put((player, player.salt))
-            return # Set username - wait for next call for password
+            # Tell user to enter password
+            self.send(player, LoginTags.ENTER_PASSWORD, player.salt)
 
-        # Otherwise - try password
+    def check_password(self, player, saltedPassword):
         username = player.username
-        saltedPassword = message
 
         # Log into existing account
         if self.username_exists(username):
             if self.password_correct(username, saltedPassword):
                 player.login_verified = True
+                self.verified_queue.put(player)
             else:
-                self.output_queue.put(player, "bad password - try again!")
+                self.send(player, LoginTags.BAD_PASSWORD, player.salt)
 
         # Create a new account
         else:
