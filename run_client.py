@@ -8,7 +8,6 @@ def main(ui):
     stopInput = True
     inLogin = True
     loginTag = LoginTags.ENTER_USERNAME
-    encrypt = EncryptionUtil()
     salt = None
 
     try:

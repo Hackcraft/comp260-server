@@ -1,4 +1,4 @@
-from server import GameState, Player, PlayerPersistence, Dungeon, Vector2, DataTags, DataPacket
+from server import GameState, Player, PlayerPersistence, Dungeon, Vector2, DataTags, DataPacket, Room
 
 from queue import Queue
 
@@ -33,12 +33,53 @@ class Play(GameState):
         super().leave(player)
 
     def update(self, ply: Player, msg: str):
-        raise NotImplementedError
+
+
+
         # Fetch the command
 
 
     def move(self, player: Player, pos: Vector2):
-        pass
+        if self.dungeon.is_valid_position(pos):
+            old_pos = player.pos
+            player.pos = pos
+            self.send_room_data(player)
+
+            # Only notify players of join/leave if they actually moved rooms
+            if old_pos == pos:
+                return
+
+            old_room = self.dungeon.room_at_position(old_pos)
+            new_room = self.dungeon.room_at_position(pos)
+
+            self.send_msg_to_room(old_room, "Player: %s has left the room" % player.get_name())
+            self.send_msg_to_room(new_room, "Player: %s has joined the room" % player.get_name())
+        else:
+            self.send(player, DataTags.WRITE, "Not a valid direction!")  # TODO - less confusing message if map changes
+
+    def command_move(self, player: Player, msg: str):
+        if msg in self.dungeon.NAME_TO_DIRECTION:
+            direction = self.dungeon.NAME_TO_DIRECTION[msg]
+            self.move(player, direction)
+        else:
+            self.send(player, DataTags.WRITE, "Not a valid direction!")
+
+    def send_room_data(self, player: Player):
+        room = self.dungeon.room_at_position(player.pos)
+        dirs = self.dungeon.directions_from_room(room)
+        data = '%s\n%s\nDirections: %s' % (room.name, room.desc, dirs)
+        self.send(player, DataTags.WRITE, data)
+
+    def say(self, player: Player, msg: str):
+        room = self.dungeon.room_at_position(player.pos)
+        self.send_msg_to_room(room, msg)
+
+    def command_say(self, player: Player, msg: str):
+        self.say(player, msg)
+
+    def send_msg_to_room(self, room: Room, msg: str):
+        for player in room.players:
+            self.send(player, DataTags.WRITE, msg)
 
     # Save the current game state
     def save(self):

@@ -63,8 +63,20 @@ class Dungeon:
         vec2.y = int(math.floor(min(max_index, index) / self.CHUNK_LENGTH))
         return vec2
 
-    def global_position_of_room(self, room: Room):
-        return room.local_pos + (room.chunk_pos * self.CHUNK_LENGTH)
+    #def global_position_of_room(self, room: Room):
+    #    return room.local_pos + (room.chunk_pos * self.CHUNK_LENGTH)
+
+    def directions_from_room(self, room):
+        directions = []
+        if self.room_at_position(room.local_pos + self.NORTH):
+            directions.append("north")
+        if self.room_at_position(room.local_pos + self.EAST):
+            directions.append("east")
+        if self.room_at_position(room.local_pos + self.SOUTH):
+            directions.append("south")
+        if self.room_at_position(room.local_pos + self.WEST):
+            directions.append("west")
+        return ', '.join(directions)
 
     def save(self):
         raise NotImplementedError
