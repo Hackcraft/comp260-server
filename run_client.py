@@ -5,6 +5,7 @@ import threading
 import hashlib
 
 def main(ui):
+    stopInput = True
     inLogin = True
     loginTag = LoginTags.ENTER_USERNAME
     encrypt = EncryptionUtil()
@@ -30,6 +31,7 @@ def main(ui):
             # Handle Login state
             if tag is LoginTags.ENTER_USERNAME:
                 loginTag = LoginTags.ENTER_USERNAME
+                stopInput = False
                 ui.input_queue.put("Enter username: ")
 
             elif tag is LoginTags.ENTER_PASSWORD:
@@ -52,6 +54,9 @@ def main(ui):
         # Input from client
         while ui.output_queue.qsize() > 0:
             msg = ui.output_queue.get()
+
+            if stopInput:
+                continue
 
             # Login state
             if inLogin:
