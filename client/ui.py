@@ -12,9 +12,10 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5 import QtCore
 
-class UI:
+class UI(QWidget):
 
     def __init__(self):
+        super().__init__()
         self.input_queue = Queue()
         self.output_queue = Queue()
         self.command_queue = Queue()
@@ -26,7 +27,6 @@ class UI:
         self.timer = QtCore.QTimer()
         self.timer.setInterval(1000)
         self.timer.timeout.connect(self.timerEvent)
-        self.timer.start()
         self.timer.start(100)
 
     def initUI(self):
