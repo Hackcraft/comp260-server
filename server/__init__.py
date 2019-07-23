@@ -17,5 +17,5 @@ from server.game_state import GameState
 from server.login import Login
 from server.play import Play
 
-__all__ = ['DataTags', 'EncryptionUtil', 'Entity', 'Vector2', 'LoginTags', 'DataPacket'
+__all__ = ['DataTags', 'EncryptionUtil', 'Entity', 'Vector2', 'LoginTags', 'DataPacket',
            'Dungeon', 'GameState', 'Login', 'NetConnection', 'Play', 'Player', 'PlayerPersistence', 'Room']

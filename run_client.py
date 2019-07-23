@@ -4,6 +4,12 @@ import sys
 import threading
 
 def main(ui):
+    try:
+        netCon = NetConnection()
+    except:
+        ui.input_queue.put("Cannot connect to the server! (relaunch to try again)")
+    else:
+        ui.command_queue.put("connected")
     while True:
         while ui.output_queue.qsize() > 0:
             msg = ui.output_queue.get()
