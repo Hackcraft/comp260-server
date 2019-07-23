@@ -8,4 +8,4 @@ from shared import *
 from client.ui import *
 from client.net_connection import *
 
-__all__ = ['DataTags', 'EncryptionUtil', 'Entity', 'Vector2', 'UI', 'NetConnection', 'LoginTags']
+__all__ = ['DataTags', 'EncryptionUtil', 'Entity', 'Vector2', 'UI', 'NetConnection', 'LoginTags', 'DataPacket']

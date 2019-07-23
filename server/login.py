@@ -35,6 +35,7 @@ class Login(GameState):
 
     def join(self, player: Player):
         super().join(player)
+        print("Player joined login state")
         self.send(player, LoginTags.ENTER_USERNAME)  # When they join - request username
 
     def leave(self, player: Player):

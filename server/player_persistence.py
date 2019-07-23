@@ -7,7 +7,7 @@ class PlayerPersistence:
         self.db = db
         self.cursor = db.cursor()
 
-        self._set_up_table()
+        #self._set_up_table()
 
     def _set_up_table(self):
         raise NotImplementedError

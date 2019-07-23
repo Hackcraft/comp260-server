@@ -247,16 +247,24 @@ class NetConnection:
                 # Add to table
                 with self.clients_lock:
                     self.clients[client_id] = client
-                self.connects.put(client_id)
 
     def _client_message_group_thread(self):
         print("Putting client messages into one central queue")
+
+        verifiedClients = {}
 
         while self.accepting_clients:
             time.sleep(0.1)
             try:
                 for client in self.clients:
                     if self.clients[client].is_connected():
+
+                        if client not in verifiedClients:
+                            if self.clients[client].state == self.clients[client].CONNECTED_SECURELY:
+                                verifiedClients[client] = True
+                                self.connects.put(client)
+                                print("Added client to connects")
+
                         while self.clients[client].incoming_queue.qsize() > 0:
                             self.message_queue.put((client, self.clients[client].incoming_queue.get()))
                     else:
@@ -264,9 +272,10 @@ class NetConnection:
                         self.clients[client].close()
                         with self.clients_lock:
                             del self.clients[client]
+                            del verifiedClients[client]
 
                         print("Lost client")  # TODO HANDLE LOST or move?
-            except:
+            except Exception as e:
                 pass
 
     def close(self):
@@ -299,6 +308,7 @@ class NetConnection:
 
     def is_pending_recv(self):
         return self.message_queue.qsize() > 0
+
 
     # Check for disconnected clients
 

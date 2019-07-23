@@ -36,21 +36,24 @@ if __name__ == '__main__':
     # Try and connect to a socket
     try:
         net = NetConnection("127.0.0.1", 8222)
-    except:
+    except Exception as e:
+        print(e)
         errorMsg += "Unable to bind to ip or port\n"
 
     # Setup the login state
     try:
         login_db = sqlite3.connect(':memory:')
         login_state = Login(login_db)
-    except:
+    except Exception as e:
+        print(e)
         errorMsg += "Unable to connect to user account (login) database\n"
 
     # Setup the play state
     try:
         play_db = sqlite3.connect(':memory:')
         play_state = Play(play_db)
-    except:
+    except Exception as e:
+        print(e)
         errorMsg += "Unable to connect to player data database\n"
 
     # If there's an error - stop server - wait to close TODO Test that it actually works
@@ -78,9 +81,11 @@ if __name__ == '__main__':
             # Fetch new net connections
             # Send them to the login state
             while net.connects.qsize() > 0:
+                print("Found new net connection!")
                 index = net.connects.get()
                 ply = Player()
                 ply.connection_id = index
+                players[ply.connection_id] = ply
                 login_state.join(ply)
 
             # Fetch verified logins
@@ -123,12 +128,13 @@ if __name__ == '__main__':
             # Finally send the output from the Login state
             while login_state.output_queue.qsize() > 0:
                 ply, msg = login_state.output_queue.get()
-                net.send(ply.connection_id, msg.encode("utf-8"))
+                net.send(ply.connection_id, msg)
             # And the Play state
             while play_state.output_queue.qsize() > 0:
                 ply, msg = play_state.output_queue.get()
-                net.send(ply.connection_id, msg.encode("utf-8"))
+                net.send(ply.connection_id, msg)
 
-
+        except Exception as e:
+            print(e)
         except KeyboardInterrupt:
             sys.exit()
