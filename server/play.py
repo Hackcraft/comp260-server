@@ -9,9 +9,16 @@ class Play(GameState):
         self.db = db
         self.player_persistence = PlayerPersistence(db)
         self.dungeon = Dungeon(db)
-        self.output_queue = Queue() # (player, msg)
+        self.output_queue = Queue()  # (player, msg)
+        self.kick_queue = Queue()  # (player, reason)
 
     def join(self, player: Player):
+        # Check for duplicate connections
+        for ply in self.players:
+            if ply.username == player.username:
+                self.kick_queue.put((player, "You are already logged on from a different computer!"))
+                return
+
         super().join(player)
         self.player_persistence.load_data(player)
         self.clear_players_screen(player)

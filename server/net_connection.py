@@ -278,6 +278,11 @@ class NetConnection:
             except Exception as e:
                 pass
 
+    def close_client(self, client_index):
+        with self.clients_lock:
+            if client_index in self.clients:
+                self.clients[client_index].close()
+
     def close(self):
         self.accepting_clients = False
 

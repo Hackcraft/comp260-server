@@ -5,6 +5,7 @@ class DataTags(Enum):
     # Client actions
     CLEAR = auto()  # Clear the screen of the client
     WRITE = auto()  # Write a message to the screen of the client
+    DUPLICATE_LOGIN = auto()
 
     # Client msg processing is all done server side so the client will
     # send direct output from their game with no processing

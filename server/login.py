@@ -63,6 +63,7 @@ class Login(GameState):
 
     def check_username(self, player: Player, username: str):
         # TODO check if user is already logged in
+
         # Set username first
         if player.username is None:
             player.username = username

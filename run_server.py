@@ -72,7 +72,7 @@ if __name__ == '__main__':
     bindInputToQueue(inputQueue)
 
     # Update in order
-    while shouldRun:
+    while True:
         try:
             # Wait for stop command
             if inputQueue.qsize() > 0:
@@ -109,6 +109,14 @@ if __name__ == '__main__':
                 players.pop(connection_id, None)
                 print("Removed connection id: %s" % connection_id)
 
+            # Check for players which should be kicked
+            while play_state.kick_queue.qsize() > 0:
+                ply, reason = play_state.kick_queue.get()
+                net.send(ply.connection_id, DataPacket.combine(DataTags.DUPLICATE_LOGIN, reason))
+                ply.login_verified = False
+                ply.username = None
+                login_state.join(ply)
+
             # Update from client messages
             while net.is_pending_recv():
                 connection_id, msg = net.recv()
@@ -140,3 +148,4 @@ if __name__ == '__main__':
             print(e)
         except KeyboardInterrupt:
             sys.exit()
+

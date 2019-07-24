@@ -19,6 +19,7 @@ class UI(QWidget):
         self.input_queue = Queue()
         self.output_queue = Queue()
         self.command_queue = Queue()
+        self.should_close = False
 
         # Create UI
         self.initUI()
@@ -59,3 +60,6 @@ class UI(QWidget):
     def on_submitted_input(self):
         self.output_queue.put(self.user_input.text())
         self.user_input.setText("")
+
+    def closeEvent(self, event):
+        self.should_close = True
