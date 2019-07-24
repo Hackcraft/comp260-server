@@ -34,8 +34,8 @@ class Play(GameState):
         msg = "Welcome to the Dungeon %s!" % player.get_name()
         self.send(player, DataTags.WRITE, msg)
 
-    def help_commands(self, player: Player):
-        msg = "The commands are: move/go, say, name, room_name, room_desc, help"
+    def help_commands(self, player: Player, none = None):
+        msg = "The commands are: move/go, say, name, room_name, room_desc, clear, help"
         self.send(player, DataTags.WRITE, msg)
 
     def clear_players_screen(self, player: Player):
@@ -65,24 +65,21 @@ class Play(GameState):
         command = trimmed[0].lower() if 0 < len(trimmed) else ''
         argStr = data[len(command):].lstrip().rstrip()
 
-        if command == 'move' or command == 'go':
-            self.command_move(ply, argStr)
-            self.save(ply)
+        command_func = {
+            'move': self.command_move,
+            'go': self.command_move,
+            'say': self.command_say,
+            'name': self.command_name,
+            'room_name': self.command_room_name,
+            'room_desc': self.command_room_desc,
+            'help': self.help_commands,
+            'clear': self.command_clear
+        }
 
-        elif command == 'say':
-            self.command_say(ply, argStr)
-
-        elif command == 'name':
-            self.command_name(ply, argStr)
-
-        elif command == 'room_name':
-            self.command_room_name(ply, argStr)
-
-        elif command == 'room_desc':
-            self.command_room_desc(ply, argStr)
-
-        elif command == 'help':
-            self.help_commands(ply)
+        if command in command_func:
+            command_func[command](ply, argStr)
+        else:
+            self.send(ply, DataTags.WRITE, "Command %s not recognised :(")
 
 
     def move(self, player: Player, pos: Vector2):
@@ -110,6 +107,8 @@ class Play(GameState):
                 player_names = ', '.join([ply.get_true_name() for ply in new_room.players if ply != player])
                 self.send(player, DataTags.WRITE, "There are %d people in this room: %s" %
                           (len(new_room.players) - 1, player_names))
+            # Save the player's position
+            self.player_persistence.save_data(player)
         else:
             self.send(player, DataTags.WRITE, "Not a valid direction!")  # TODO - less confusing message if map changes
 
@@ -171,6 +170,9 @@ class Play(GameState):
             room.desc = desc
             self.send_msg_to_room(room, "Room description changed by %s to: %s" % (player.get_name(), desc))
             self.dungeon.save()
+
+    def command_clear(self, player: Player, none = None):
+        self.send(player, DataTags.CLEAR)
 
     # Save the current game state
     def save(self, player: Player = None):
