@@ -8,6 +8,7 @@ class DataTags(Enum):
 
     # Client msg processing is all done server side so the client will
     # send direct output from their game with no processing
+    FORWARD = auto()
 
 #print(DataTags.CLEAR.__class__.__name__)
 #print(DataTags(3).name)

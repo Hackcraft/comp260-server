@@ -45,6 +45,7 @@ def main(ui):
 
             # Handle Play state
             elif tag is DataTags.WRITE:
+                inLogin = False
                 ui.input_queue.put(msg)
 
             elif tag is DataTags.CLEAR:
@@ -68,7 +69,8 @@ def main(ui):
 
             # Play state
             else:
-                pass
+                # Forward the messages to the server to process
+                net.send(DataPacket.combine(DataTags.FORWARD, msg))
 
             print(msg)
 

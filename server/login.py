@@ -45,7 +45,7 @@ class Login(GameState):
         self.output_queue.put((player, DataPacket.combine(tag, msg)))
 
     # Update is not thread safe
-    def update(self, player: Player, data_packet: DataPacket):
+    def update(self, player: Player, data_packet: str):
         # Verified users should't be sending messages here
         if player.login_verified:
             return

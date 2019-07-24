@@ -7,11 +7,10 @@ from server import Vector2
 
 class Room:
 
-    def __init__(self, obj_id=None, name="Unknown", desc="Unknown", dirs=[]):
+    def __init__(self, obj_id=None, name="Unknown", desc="Unknown"):
         self.obj_id = obj_id
         self.name = name
         self.desc = desc
-        self.dirs = dirs
 
         self.local_pos = Vector2(0, 0)
         self.chunk_pos = Vector2(0, 0)

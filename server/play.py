@@ -32,9 +32,27 @@ class Play(GameState):
     def leave(self, player: Player):
         super().leave(player)
 
-    def update(self, ply: Player, msg: str):
+    def update(self, ply: Player, data_packet: str):
+        tag, data = DataPacket.separate(data_packet)
 
+        # Only handle forwarded data
+        if tag is not DataTags.FORWARD:
+            return
 
+        # Remove leading whitespace
+        data = data.lstrip()
+        # Separate by word
+        split = data.split(' ')
+        trimmed = [x for x in split if x != '']
+
+        # Get the command and arg
+        command = trimmed[0] if 0 < len(trimmed) else ''
+        argStr = data[len(command):].lstrip().rstrip()
+
+        if command == 'move' or command == 'go':
+            self.command_move(ply, argStr)
+        elif command == 'say':
+            self.say(ply, argStr)
 
         # Fetch the command
 
@@ -60,7 +78,7 @@ class Play(GameState):
     def command_move(self, player: Player, msg: str):
         if msg in self.dungeon.NAME_TO_DIRECTION:
             direction = self.dungeon.NAME_TO_DIRECTION[msg]
-            self.move(player, direction)
+            self.move(player, player.pos + direction)
         else:
             self.send(player, DataTags.WRITE, "Not a valid direction!")
 
@@ -68,6 +86,7 @@ class Play(GameState):
         room = self.dungeon.room_at_position(player.pos)
         dirs = self.dungeon.directions_from_room(room)
         data = '%s\n%s\nDirections: %s' % (room.name, room.desc, dirs)
+        print(data)
         self.send(player, DataTags.WRITE, data)
 
     def say(self, player: Player, msg: str):

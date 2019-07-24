@@ -31,10 +31,10 @@ class Dungeon:
 
     def _load(self):
         self._rooms = [
-            Room(1, [self.EAST, self.NORTH], "This is room 1"),  # bottom left
-            Room(2, [self.WEST, self.NORTH], "This is room 2"),  # bottom right
-            Room(3, [self.EAST, self.SOUTH], "This is room 3"),  # top left
-            Room(4, [self.WEST, self.SOUTH], "This is room 4")  # top right
+            Room(1, "This is room 1", "This is no ordinary room."),  # bottom left
+            Room(2, "This is room 2", "This is an ordinary room."),  # bottom right
+            Room(3, "This is room 3", "This is no ordinary room."),  # top left
+            Room(4, "This is room 4", "This is an ordinary room.")  # top right
         ]
 
         self.assign_positions_to_rooms()
@@ -48,7 +48,8 @@ class Dungeon:
 
     def room_at_position(self, vec2: Vector2):
         index = self.room_index_at_position(vec2)
-        if 0 <= index < len(self._rooms) and self._rooms[index] is not None:
+        if 0 <= vec2.x < self.CHUNK_LENGTH > vec2.y >= 0 and \
+            0 <= index < len(self._rooms) and self._rooms[index] is not None:
             return self._rooms[index]
         else:
             return None
@@ -63,19 +64,13 @@ class Dungeon:
         vec2.y = int(math.floor(min(max_index, index) / self.CHUNK_LENGTH))
         return vec2
 
+    # Commented out because the current setup for 'directions_from_room' doesn't support chunks - also working on MVP
     #def global_position_of_room(self, room: Room):
     #    return room.local_pos + (room.chunk_pos * self.CHUNK_LENGTH)
 
     def directions_from_room(self, room):
-        directions = []
-        if self.room_at_position(room.local_pos + self.NORTH):
-            directions.append("north")
-        if self.room_at_position(room.local_pos + self.EAST):
-            directions.append("east")
-        if self.room_at_position(room.local_pos + self.SOUTH):
-            directions.append("south")
-        if self.room_at_position(room.local_pos + self.WEST):
-            directions.append("west")
+        directions = [name for name in self.NAME_TO_DIRECTION
+                      if self.room_at_position(room.local_pos + self.NAME_TO_DIRECTION[name])]
         return ', '.join(directions)
 
     def save(self):
