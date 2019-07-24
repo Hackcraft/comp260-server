@@ -44,8 +44,9 @@ class Play(GameState):
 
     def leave(self, player: Player):
         super().leave(player)
+        room = self.dungeon.room_at_position(player.pos)
+        room.leave(player)
         if player.get_name() is not None:
-            room = self.dungeon.room_at_position(player.pos)
             self.send_msg_to_room(room, "%s has left the server" % player.get_name(), [player])
 
     def update(self, ply: Player, data_packet: str):
