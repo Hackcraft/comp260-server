@@ -63,15 +63,17 @@ class Play(GameState):
             player.pos = pos
             self.send_room_data(player)
 
-            # Only notify players of join/leave if they actually moved rooms
-            if old_pos == pos:
-                return
-
+            # Fetch the rooms
             old_room = self.dungeon.room_at_position(old_pos)
             new_room = self.dungeon.room_at_position(pos)
 
-            self.send_msg_to_room(old_room, "Player: %s has left the room" % player.get_name())
-            self.send_msg_to_room(new_room, "Player: %s has joined the room" % player.get_name())
+            # Update players in rooms
+            if old_pos != pos:
+                old_room.leave(player)
+                self.send_msg_to_room(old_room, "%s has left the room" % player.get_name())
+
+            new_room.join(player)
+            self.send_msg_to_room(new_room, "%s has joined the room" % player.get_name())
         else:
             self.send(player, DataTags.WRITE, "Not a valid direction!")  # TODO - less confusing message if map changes
 
@@ -86,12 +88,12 @@ class Play(GameState):
         room = self.dungeon.room_at_position(player.pos)
         dirs = self.dungeon.directions_from_room(room)
         data = '%s\n%s\nDirections: %s' % (room.name, room.desc, dirs)
-        print(data)
         self.send(player, DataTags.WRITE, data)
 
     def say(self, player: Player, msg: str):
         room = self.dungeon.room_at_position(player.pos)
-        self.send_msg_to_room(room, msg)
+        print(player in room.players)
+        self.send_msg_to_room(room, player.get_name() + ": " + msg)
 
     def command_say(self, player: Player, msg: str):
         self.say(player, msg)
@@ -102,13 +104,9 @@ class Play(GameState):
 
     # Save the current game state
     def save(self):
-        raise NotImplementedError
         # Save player data
         for player in self.players:
             self.player_persistence.save_data(player)
-
-        # Save room data
-        pass
 
 
 
