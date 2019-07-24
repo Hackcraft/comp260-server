@@ -25,7 +25,7 @@ class Player:
         return self.nickname or self.username
 
     def get_true_name(self):
-        if self.nickname != self.username:
+        if self.nickname is not None and self.nickname != self.username:
             return '%s (%s)' % (self.nickname, self.username)
         else:
             return self.get_name()
