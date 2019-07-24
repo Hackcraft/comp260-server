@@ -7,6 +7,7 @@ from queue import Queue
 import sys
 import PyQt5.QtCore
 import PyQt5.QtWidgets
+import html
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -55,10 +56,10 @@ class UI(QWidget):
                 self.setWindowTitle("Multi user Dungeon | Not connected to server")
         # Chat output
         if self.input_queue.qsize() > 0:
-            self.chatOutput.appendPlainText(self.input_queue.get())
+            self.chatOutput.appendPlainText(html.escape(self.input_queue.get()))
 
     def on_submitted_input(self):
-        self.output_queue.put(self.user_input.text())
+        self.output_queue.put(html.escape(self.user_input.text()))
         self.user_input.setText("")
 
     def closeEvent(self, event):
