@@ -3,25 +3,46 @@ from PyQt5.QtWidgets import *
 import sys
 import threading
 import hashlib
+import time
+
+# Building note:
+# -m PyInstaller -y --noconsole
 
 def main(ui):
     stopInput = True
     inLogin = True
     loginTag = LoginTags.ENTER_USERNAME
     salt = None
+    initially_connected = False
 
-    try:
-        net = NetConnection()
-    except:
-        ui.input_queue.put("Cannot connect to the server! (relaunch to try again)")
-        return
-    else:
-        ui.command_queue.put("connected")
+    ip = "127.0.0.1"
+    port = 8222
 
     while True:
+        # Inital connection
+        while not initially_connected:
+            try:
+                net = NetConnection(ip, port)
+            except:
+                ui.input_queue.put("Cannot connect to the server!")
+                time.sleep(1)
+                continue
+            else:
+                initially_connected = True
+                ui.command_queue.put("clear")
+                ui.command_queue.put("connected")
+
+        # Reconnect
         if not net.is_connected():
             ui.command_queue.put("disconnected")
-            ui.input_queue.put("Restart client to reconnect!")
+            try:
+                net = NetConnection(ip, port)
+            except:
+                ui.input_queue.put("Trying to reconnect to server!")
+                time.sleep(1)
+            else:
+                ui.command_queue.put("connected")
+                ui.command_queue.put("clear")
 
         # Input from server
         while net.incoming_queue.qsize() > 0:
@@ -31,16 +52,19 @@ def main(ui):
             if tag is LoginTags.ENTER_USERNAME:
                 loginTag = LoginTags.ENTER_USERNAME
                 stopInput = False
+                inLogin = True
                 ui.input_queue.put("Enter username: ")
 
             elif tag is LoginTags.ENTER_PASSWORD:
                 loginTag = LoginTags.ENTER_PASSWORD
                 salt = msg
+                inLogin = True
                 ui.input_queue.put("Enter password: ")
 
             elif tag is LoginTags.BAD_PASSWORD:
                 loginTag = LoginTags.ENTER_PASSWORD
                 salt = msg
+                inLogin = True
                 ui.input_queue.put("Bad password!\nEnter password: ")
 
             # Handle Play state
@@ -71,8 +95,6 @@ def main(ui):
             else:
                 # Forward the messages to the server to process
                 net.send(DataPacket.combine(DataTags.FORWARD, msg))
-
-            print(msg)
 
 if __name__ == '__main__':
 

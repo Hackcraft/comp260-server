@@ -16,6 +16,7 @@ class Play(GameState):
         self.player_persistence.load_data(player)
         self.clear_players_screen(player)
         self.welcome_message(player)
+        print("Moving player: %s to %s" % (player.get_name(), player.pos ))
         self.move(player, player.pos)
 
     def send(self, player, tag, msg="none"):
@@ -54,7 +55,7 @@ class Play(GameState):
         if command == 'move' or command == 'go':
             self.command_move(ply, argStr)
         elif command == 'say':
-            self.say(ply, argStr)
+            self.command_say(ply, argStr)
 
         # Save their data # TODO don't run after every command
         self.save(ply)
