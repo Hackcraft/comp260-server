@@ -8,6 +8,8 @@ class TestPlay(unittest.TestCase):
     @classmethod
     def setUp(cls):
         cls.player = Player()
+        cls.player.player_id = 1
+        cls.player.username = 'bob'
         cls.play = Play(sqlite3.connect(':memory:'))
         cls.play.join(cls.player)
         cls.play.output_queue.get()  # Remove clear
@@ -28,8 +30,9 @@ class TestPlay(unittest.TestCase):
         ply, data = self.play.output_queue.get()
         tag, msg = DataPacket.separate(data)
 
-        assert msg == test_msg
+        assert msg == ply.get_name() + ": " + test_msg
         assert ply == self.player
+
 
 
 

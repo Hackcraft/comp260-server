@@ -33,6 +33,9 @@ if __name__ == '__main__':
     players = {}    # connection_id = player
     shouldRun = True
 
+    login_db_file = 'login.sql'
+    play_db_file = 'play.sql'
+
     # Try and connect to a socket
     try:
         net = NetConnection("127.0.0.1", 8222)
@@ -42,7 +45,7 @@ if __name__ == '__main__':
 
     # Setup the login state
     try:
-        login_db = sqlite3.connect(':memory:')
+        login_db = sqlite3.connect(login_db_file)
         login_state = Login(login_db)
     except Exception as e:
         print(e)
@@ -50,7 +53,7 @@ if __name__ == '__main__':
 
     # Setup the play state
     try:
-        play_db = sqlite3.connect(':memory:')
+        play_db = sqlite3.connect(play_db_file)
         play_state = Play(play_db)
     except Exception as e:
         print(e)

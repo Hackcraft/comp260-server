@@ -24,7 +24,8 @@ class Login(GameState):
     def _setup_tables(self):
         try:
             self.cursor.execute(
-                '''create table %s (
+                '''CREATE TABLE IF NOT EXISTS %s (
+                player_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username varchar(20),
                 salted_password varchar(20),
                 salt varchar(20))''' % self.LOGIN_TABLE
@@ -80,6 +81,7 @@ class Login(GameState):
         if self.username_exists(username):
             if self.password_correct(username, saltedPassword):
                 player.login_verified = True
+                player.player_id = self._user_login_data(player.username)['player_id']
                 self.verified_queue.put(player)
             else:
                 self.send(player, LoginTags.BAD_PASSWORD, player.salt)
@@ -88,23 +90,30 @@ class Login(GameState):
         else:
             self.create_account(username, saltedPassword, player.salt)
             player.login_verified = True
+            player.player_id = self._user_login_data(player.username)['player_id']
             self.verified_queue.put(player)
 
     def create_account(self, username, salted_password, salt):
-        self.cursor.execute(
-            'insert into %s(username, salted_password, salt) values(?,?,?)' % self.LOGIN_TABLE,
-            (username, salted_password, salt)
-        )
-        self.database.commit()
+        try:
+            self.cursor.execute(
+                'insert into %s(username, salted_password, salt) values(?,?,?)' % self.LOGIN_TABLE,
+                (username, salted_password, salt)
+            )
+        except Exception as e:
+            print(e)
+        else:
+            self.database.commit()
 
     def _user_login_data(self, username):
-        self.cursor.execute('select * from %s where username = ?' % self.LOGIN_TABLE, [username])
+        self.cursor.execute('select player_id, username, salted_password, salt from %s where username = ?' %
+                            self.LOGIN_TABLE, [username])
         rows = self.cursor.fetchall()
         if len(rows) >= 1:
             data = {}
-            data['username'] = rows[0][0]
-            data['salted_password'] = rows[0][1]
-            data['salt'] = rows[0][2]
+            data['player_id'] = rows[0][1]
+            data['username'] = rows[0][1]
+            data['salted_password'] = rows[0][2]
+            data['salt'] = rows[0][3]
             return data
         return None
 

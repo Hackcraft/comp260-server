@@ -54,6 +54,9 @@ class Play(GameState):
         elif command == 'say':
             self.say(ply, argStr)
 
+        # Save their data # TODO don't run after every command
+        self.save(ply)
+
         # Fetch the command
 
 
@@ -92,7 +95,6 @@ class Play(GameState):
 
     def say(self, player: Player, msg: str):
         room = self.dungeon.room_at_position(player.pos)
-        print(player in room.players)
         self.send_msg_to_room(room, player.get_name() + ": " + msg)
 
     def command_say(self, player: Player, msg: str):
@@ -103,10 +105,13 @@ class Play(GameState):
             self.send(player, DataTags.WRITE, msg)
 
     # Save the current game state
-    def save(self):
-        # Save player data
-        for player in self.players:
+    def save(self, player: Player = None):
+        if player is not None:
             self.player_persistence.save_data(player)
+        else:
+            # Save player data
+            for player in self.players:
+                self.player_persistence.save_data(player)
 
 
 

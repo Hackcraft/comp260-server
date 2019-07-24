@@ -7,13 +7,14 @@ class Player:
         self.pos = pos
 
         self.username = None
+        self.nickname = None
 
         self.connection_id = None
         self.salt = None
         self.login_verified = False
 
     def get_name(self):
-        return self.username
+        return self.nickname or self.username
 
     def is_connected(self):
         return self.connection_id is not None

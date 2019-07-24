@@ -1,7 +1,7 @@
 import unittest
 import sqlite3
 
-from server import Dungeon, Room, Vector2
+from server import Dungeon, Room
 
 
 class TestDungeon(unittest.TestCase):
@@ -13,6 +13,5 @@ class TestDungeon(unittest.TestCase):
         cls.room = Room()
 
     def test_directions_parser(self):
-        print(self.dungeon.directions_from_room(self.room))
         assert self.dungeon.directions_from_room(self.room) == 'north, east'
 
