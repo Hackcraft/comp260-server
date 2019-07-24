@@ -110,7 +110,7 @@ class Login(GameState):
         rows = self.cursor.fetchall()
         if len(rows) >= 1:
             data = {}
-            data['player_id'] = rows[0][1]
+            data['player_id'] = rows[0][0]
             data['username'] = rows[0][1]
             data['salted_password'] = rows[0][2]
             data['salt'] = rows[0][3]

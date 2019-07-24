@@ -40,6 +40,8 @@ class PlayerPersistence:
     def load_data(self, player: Player):
         data = self._player_data(player.player_id)
 
+        print(data)
+
         if data is not None:
             player.nickname = data['nickname']
             player.pos.x = data['pos_x']

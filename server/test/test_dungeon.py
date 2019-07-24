@@ -1,7 +1,7 @@
 import unittest
 import sqlite3
 
-from server import Dungeon, Room
+from server import Dungeon, Room, Vector2
 
 
 class TestDungeon(unittest.TestCase):

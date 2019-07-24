@@ -31,6 +31,8 @@ class Play(GameState):
 
     def leave(self, player: Player):
         super().leave(player)
+        room = self.dungeon.room_at_position(player.pos)
+        self.send_msg_to_room(room, "%s has left the server" % player.get_name(), [player])
 
     def update(self, ply: Player, data_packet: str):
         tag, data = DataPacket.separate(data_packet)
@@ -73,10 +75,18 @@ class Play(GameState):
             # Update players in rooms
             if old_pos != pos:
                 old_room.leave(player)
-                self.send_msg_to_room(old_room, "%s has left the room" % player.get_name())
+                self.send_msg_to_room(old_room, "%s has left the room" % player.get_name(), [player])
 
             new_room.join(player)
-            self.send_msg_to_room(new_room, "%s has joined the room" % player.get_name())
+
+            # Notify everyone in the room that a player has joined
+            self.send_msg_to_room(new_room, "%s has joined the room" % player.get_name(), [player])
+
+            # Notify player of the players in the room they have joined
+            if len(new_room.players) > 1:
+                player_names = ', '.join([ply.get_name() for ply in new_room.players if ply != player])
+                self.send(player, DataTags.WRITE, "There are %d people in this room: %s" %
+                          (len(new_room.players) - 1, player_names))
         else:
             self.send(player, DataTags.WRITE, "Not a valid direction!")  # TODO - less confusing message if map changes
 
@@ -100,9 +110,10 @@ class Play(GameState):
     def command_say(self, player: Player, msg: str):
         self.say(player, msg)
 
-    def send_msg_to_room(self, room: Room, msg: str):
+    def send_msg_to_room(self, room: Room, msg: str, ignore=[]):
         for player in room.players:
-            self.send(player, DataTags.WRITE, msg)
+            if player not in ignore:
+                self.send(player, DataTags.WRITE, msg)
 
     # Save the current game state
     def save(self, player: Player = None):

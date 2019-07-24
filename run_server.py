@@ -100,10 +100,9 @@ if __name__ == '__main__':
 
             # Fetch lost net connections
             # flag and remove them from game states
-            connections_to_remove = Queue()
             while net.disconnects.qsize() > 0:
-                ply = net.disconnects.get()
-                connection_id = ply.connection_id
+                connection_id = net.disconnects.get()
+                ply = players[connection_id]
                 ply.connection_id = None
                 login_state.leave(ply)
                 play_state.leave(ply)
