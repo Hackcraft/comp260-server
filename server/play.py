@@ -23,14 +23,14 @@ class Play(GameState):
         self.player_persistence.load_data(player)
         self.clear_players_screen(player)
         self.welcome_message(player)
-        print("Moving player: %s to %s" % (player.get_name(), player.pos ))
+        print("Moving player: %s to %s" % (player.get_name(), player.pos))
         self.move(player, player.pos)
 
     def send(self, player, tag, msg="none"):
         self.output_queue.put((player, DataPacket.combine(tag, msg)))
 
     def welcome_message(self, player: Player):
-        msg = "Welcome to the Dungeon!"
+        msg = "Welcome to the Dungeon %s!" % player.get_name()
         self.send(player, DataTags.WRITE, msg)
 
     def clear_players_screen(self, player: Player):
@@ -39,8 +39,9 @@ class Play(GameState):
 
     def leave(self, player: Player):
         super().leave(player)
-        room = self.dungeon.room_at_position(player.pos)
-        self.send_msg_to_room(room, "%s has left the server" % player.get_name(), [player])
+        if player.get_name() is not None:
+            room = self.dungeon.room_at_position(player.pos)
+            self.send_msg_to_room(room, "%s has left the server" % player.get_name(), [player])
 
     def update(self, ply: Player, data_packet: str):
         tag, data = DataPacket.separate(data_packet)

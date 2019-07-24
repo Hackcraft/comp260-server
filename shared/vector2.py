@@ -45,5 +45,9 @@ class Vector2:
             return Vector2(self.x * other_vector2, self.y * other_vector2)
 
     @staticmethod
+    def copy(vec2):
+        return Vector2(vec2.x, vec2.y)
+
+    @staticmethod
     def is_valid(vec2):
         return vec2 is not None and isinstance(vec2, Vector2)

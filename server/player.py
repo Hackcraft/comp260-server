@@ -4,7 +4,7 @@ class Player:
 
     def __init__(self, player_id = None, pos = Vector2(0, 0)):
         self.player_id = player_id
-        self.pos = pos
+        self._pos = Vector2.copy(pos)
 
         self.username = None
         self.nickname = None
@@ -12,6 +12,14 @@ class Player:
         self.connection_id = None
         self.salt = None
         self.login_verified = False
+
+    @property
+    def pos(self):
+        return Vector2.copy(self._pos)
+
+    @pos.setter
+    def pos(self, vec2: Vector2):
+        self._pos = Vector2.copy(vec2)
 
     def get_name(self):
         return self.nickname or self.username

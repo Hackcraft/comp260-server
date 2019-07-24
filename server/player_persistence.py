@@ -25,8 +25,8 @@ class PlayerPersistence:
             print(e)
 
     def _player_data(self, player_id: int):
-        self.cursor.execute('select player_id, nickname, pos_x, pos_y from %s where player_id = ?' %
-                            self.PLAYER_TABLE, [player_id])
+        self.cursor.execute('select player_id, nickname, pos_x, pos_y from %s where player_id = ?' % self.PLAYER_TABLE,
+                            [player_id])
         rows = self.cursor.fetchall()
         if len(rows) >= 1:
             data = {}
@@ -44,8 +44,7 @@ class PlayerPersistence:
 
         if data is not None:
             player.nickname = data['nickname']
-            player.pos.x = data['pos_x']
-            player.pos.y = data['pos_y']
+            player.pos = Vector2(data['pos_x'], data['pos_y'])
 
 
     def save_data(self, player: Player):
