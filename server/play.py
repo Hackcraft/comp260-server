@@ -79,7 +79,7 @@ class Play(GameState):
         if command in command_func:
             command_func[command](ply, argStr)
         else:
-            self.send(ply, DataTags.WRITE, "Command %s not recognised :(")
+            self.send(ply, DataTags.WRITE, "Command %s not recognised :(" % command)
 
 
     def move(self, player: Player, pos: Vector2):
