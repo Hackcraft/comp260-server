@@ -24,6 +24,12 @@ class Player:
     def get_name(self):
         return self.nickname or self.username
 
+    def get_true_name(self):
+        if self.nickname is not self.username:
+            return '%s (%s)' % (self.nickname, self.username)
+        else:
+            return self.get_name()
+
     def is_connected(self):
         return self.connection_id is not None
 

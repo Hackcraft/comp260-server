@@ -62,11 +62,14 @@ class Play(GameState):
 
         if command == 'move' or command == 'go':
             self.command_move(ply, argStr)
+            self.save(ply)
+
         elif command == 'say':
             self.command_say(ply, argStr)
 
-        # Save their data # TODO don't run after every command
-        self.save(ply)
+        elif command == 'name':
+            self.command_name(ply, argStr)
+
 
         # Fetch the command
 
@@ -84,16 +87,16 @@ class Play(GameState):
             # Update players in rooms
             if old_pos != pos:
                 old_room.leave(player)
-                self.send_msg_to_room(old_room, "%s has left the room" % player.get_name(), [player])
+                self.send_msg_to_room(old_room, "%s has left the room" % player.get_true_name(), [player])
 
             new_room.join(player)
 
             # Notify everyone in the room that a player has joined
-            self.send_msg_to_room(new_room, "%s has joined the room" % player.get_name(), [player])
+            self.send_msg_to_room(new_room, "%s has joined the room" % player.get_true_name(), [player])
 
             # Notify player of the players in the room they have joined
             if len(new_room.players) > 1:
-                player_names = ', '.join([ply.get_name() for ply in new_room.players if ply != player])
+                player_names = ', '.join([ply.get_true_name() for ply in new_room.players if ply != player])
                 self.send(player, DataTags.WRITE, "There are %d people in this room: %s" %
                           (len(new_room.players) - 1, player_names))
         else:
@@ -118,6 +121,22 @@ class Play(GameState):
 
     def command_say(self, player: Player, msg: str):
         self.say(player, msg)
+
+    def command_name(self, player: Player, name: str):
+        if len(name) > 20:
+            reason = "Nickname too long! (max 20)"
+            self.send(player, DataTags.WRITE, reason)  # TODO change DUPLICATE_LOGIN
+        else:
+            old_name = player.get_name()
+            player.nickname = name
+            # Notify others of name change
+            self.send_msg_to_room(self.dungeon.room_at_position(player.pos), "%s (%s) has changed their name to %s" %
+                                  (old_name, player.username, player.nickname), [player])
+            # Notify the player of name change
+            self.send(player, DataTags.WRITE, "You have changed your name from %s to %s" %
+                      (old_name, player.get_name()))
+            self.save(player)
+
 
     def send_msg_to_room(self, room: Room, msg: str, ignore=[]):
         for player in room.players:

@@ -5,7 +5,7 @@ import uuid
 import json
 from queue import Queue
 
-from server import Player, GameState, DataPacket, LoginTags
+from server import Player, GameState, DataPacket, LoginTags, DataTags
 
 class Login(GameState):
 
@@ -63,7 +63,11 @@ class Login(GameState):
 
     def check_username(self, player: Player, username: str):
         # TODO check if user is already logged in
-
+        if len(username) > 20:
+            reason = "Username too long! (max 20)"
+            self.send(player, DataTags.DUPLICATE_LOGIN, reason) # TODO change DUPLICATE_LOGIN
+            self.send(player, LoginTags.ENTER_USERNAME)
+            return
         # Set username first
         if player.username is None:
             player.username = username
