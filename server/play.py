@@ -23,6 +23,7 @@ class Play(GameState):
         self.player_persistence.load_data(player)
         self.clear_players_screen(player)
         self.welcome_message(player)
+        self.help_commands(player)
         print("Moving player: %s to %s" % (player.get_name(), player.pos))
         self.move(player, player.pos)
 
@@ -31,6 +32,10 @@ class Play(GameState):
 
     def welcome_message(self, player: Player):
         msg = "Welcome to the Dungeon %s!" % player.get_name()
+        self.send(player, DataTags.WRITE, msg)
+
+    def help_commands(self, player: Player):
+        msg = "The commands are: move/go, say, name, room_name, room_desc, help"
         self.send(player, DataTags.WRITE, msg)
 
     def clear_players_screen(self, player: Player):
@@ -57,7 +62,7 @@ class Play(GameState):
         trimmed = [x for x in split if x != '']
 
         # Get the command and arg
-        command = trimmed[0] if 0 < len(trimmed) else ''
+        command = trimmed[0].lower() if 0 < len(trimmed) else ''
         argStr = data[len(command):].lstrip().rstrip()
 
         if command == 'move' or command == 'go':
@@ -70,8 +75,14 @@ class Play(GameState):
         elif command == 'name':
             self.command_name(ply, argStr)
 
+        elif command == 'room_name':
+            self.command_room_name(ply, argStr)
 
-        # Fetch the command
+        elif command == 'room_desc':
+            self.command_room_desc(ply, argStr)
+
+        elif command == 'help':
+            self.help_commands(ply)
 
 
     def move(self, player: Player, pos: Vector2):
@@ -142,6 +153,24 @@ class Play(GameState):
         for player in room.players:
             if player not in ignore:
                 self.send(player, DataTags.WRITE, msg)
+
+    def command_room_name(self, player: Player, name: str):
+        if len(name) > 30:
+            self.send(player, DataTags.WRITE, "Name too long (max 30)")
+        else:
+            room = self.dungeon.room_at_position(player.pos)
+            room.name = name
+            self.send_msg_to_room(room, "Room name changed by %s to: %s" % (player.get_name(), name))
+            self.dungeon.save()
+
+    def command_room_desc(self, player: Player, desc: str):
+        if len(desc) > 100:
+            self.send(player, DataTags.WRITE, "Description too long (max 100)")
+        else:
+            room = self.dungeon.room_at_position(player.pos)
+            room.desc = desc
+            self.send_msg_to_room(room, "Room description changed by %s to: %s" % (player.get_name(), desc))
+            self.dungeon.save()
 
     # Save the current game state
     def save(self, player: Player = None):

@@ -11,6 +11,7 @@ from server.player import Player
 from server.player_persistence import PlayerPersistence
 
 from server.room import Room
+from server.room_persistence import RoomPersistence
 from server.dungeon import Dungeon
 
 from server.game_state import GameState
@@ -18,4 +19,6 @@ from server.login import Login
 from server.play import Play
 
 __all__ = ['DataTags', 'EncryptionUtil', 'Entity', 'Vector2', 'LoginTags', 'DataPacket',
-           'Dungeon', 'GameState', 'Login', 'NetConnection', 'Play', 'Player', 'PlayerPersistence', 'Room']
+           'Dungeon', 'GameState', 'Login', 'NetConnection', 'Play',
+           'Player', 'PlayerPersistence',
+           'Room', 'RoomPersistence']

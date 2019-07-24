@@ -13,7 +13,7 @@ class PlayerPersistence:
 
     def _set_up_table(self):
         try:
-            self.cursor.execute( # TODO - Remember to check nickname length before saving - varchar(20) limit
+            self.cursor.execute(
                 '''CREATE TABLE IF NOT EXISTS %s (
                 player_id int primary key not null,
                 nickname varchar(20),
@@ -48,7 +48,7 @@ class PlayerPersistence:
 
 
     def save_data(self, player: Player):
-        print("Saving data")
+        print("Saving player data")
         try:
             self.cursor.execute(
                 'INSERT OR IGNORE INTO %s (player_id, nickname, pos_x, pos_y) VALUES (?,?,?,?)' % self.PLAYER_TABLE,

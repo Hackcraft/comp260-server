@@ -1,6 +1,6 @@
 import math
 
-from server import Room, Vector2
+from server import Room, Vector2, RoomPersistence
 
 '''
     A map class of rooms
@@ -25,7 +25,8 @@ class Dungeon:
 
     def __init__(self, db):
         self.db = db
-        self._rooms = {}  # x,y: Room
+        self.room_persistence = RoomPersistence(db)
+        self._rooms = {}  # id: Room
 
         self._load()
 
@@ -37,11 +38,16 @@ class Dungeon:
             Room(4, "This is room 4", "This is an ordinary room.")  # top right
         ]
 
-        self.assign_positions_to_rooms()
+        self._assign_positions_to_rooms()
+        self._load_room_data()
 
-    def assign_positions_to_rooms(self):
+    def _assign_positions_to_rooms(self):
         for i in range(0, len(self._rooms)):
             self._rooms[i].local_pos = self.position_at_room_index(i)
+
+    def _load_room_data(self):
+        for room in self._rooms:
+            self.room_persistence.load_data(room)
 
     def is_valid_position(self, vec2: Vector2):
         return self.room_at_position(vec2) is not None
@@ -74,7 +80,8 @@ class Dungeon:
         return ', '.join(directions)
 
     def save(self):
-        raise NotImplementedError
+        for room in self._rooms:
+            self.room_persistence.save_data(room)
 
 
 

@@ -7,8 +7,8 @@ from server import Vector2
 
 class Room:
 
-    def __init__(self, obj_id=None, name="Unknown", desc="Unknown"):
-        self.obj_id = obj_id
+    def __init__(self, room_id=None, name="Unknown", desc="Unknown"):
+        self.room_id = room_id
         self.name = name
         self.desc = desc
 
